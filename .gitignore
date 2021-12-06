@@ -1,6 +1,3 @@
-# Prerequisites
-*.d
-
 # Compiled Object files
 *.slo
 *.lo
@@ -30,3 +27,19 @@
 *.exe
 *.out
 *.app
+
+# IDE-specific
+/.idea/
+/.vs/
+/.vscode/
+/CMakeSettings.json
+
+# build artifacts
+/cmake-build-*/
+/build/
+/out/
+_build/
+
+# Conan
+*.pyc
+/test_package/build/
