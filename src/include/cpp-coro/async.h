@@ -51,7 +51,7 @@ public:
           result_.set_value(func_());
       }
       catch(...) {
-        result_.set_error(std::current_exception());
+        result_.set_exception(std::current_exception());
       }
       handle.resume();
     };

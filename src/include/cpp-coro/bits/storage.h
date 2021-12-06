@@ -92,7 +92,7 @@ public:
 template<typename T>
 class storage : public storage_base<T> {
 public:
-  void set_error(std::exception_ptr ptr)
+  void set_exception(std::exception_ptr ptr)
   {
     this->result = ptr;
   }

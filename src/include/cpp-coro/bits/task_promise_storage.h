@@ -34,7 +34,7 @@ struct task_promise_storage_base : storage<T> {
     noexcept(std::is_nothrow_move_constructible_v<std::exception_ptr>)
   { 
     TRACE_FUNC();
-    this->set_error(std::current_exception());
+    this->set_exception(std::current_exception());
   }
 };
 
