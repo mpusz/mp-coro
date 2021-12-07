@@ -33,10 +33,8 @@ namespace mp_coro {
 
 template<std::invocable Func>
 class async {
-  using type = std::invoke_result_t<Func>;
-  Func func_;
-  detail::storage<type> result_;
 public:
+  using return_type = std::invoke_result_t<Func>;
   explicit async(Func func): func_{std::move(func)} {}
   static bool await_ready() noexcept { TRACE_FUNC(); return false; }
   void await_suspend(std::coroutine_handle<> handle)
@@ -44,9 +42,8 @@ public:
     auto work = [&, handle]() {
       TRACE_FUNC();
       try {
-        if constexpr(std::is_void_v<type>) {
+        if constexpr(std::is_void_v<return_type>)
           func_();
-        }
         else
           result_.set_value(func_());
       }
@@ -59,7 +56,10 @@ public:
     TRACE_FUNC();
     std::jthread(work).detach();  // TODO: Fix that (replace with a thread pool)
   }
-  std::invoke_result_t<Func> await_resume() { TRACE_FUNC(); return result_.get(); }
+  return_type await_resume() { TRACE_FUNC(); return std::move(result_).get(); }
+private:
+  Func func_;
+  detail::storage<return_type> result_;
 };
 
 } // namespace mp_coro

@@ -92,9 +92,9 @@ public:
 template<typename T>
 class storage : public storage_base<T> {
 public:
-  void set_exception(std::exception_ptr ptr)
+  void set_exception(std::exception_ptr ptr) noexcept
   {
-    this->result = ptr;
+    this->result = std::move(ptr);
   }
 };
 

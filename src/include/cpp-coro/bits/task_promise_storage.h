@@ -31,7 +31,7 @@ namespace mp_coro::detail {
 template<typename T>
 struct task_promise_storage_base : storage<T> {
   void unhandled_exception()
-    noexcept(std::is_nothrow_move_constructible_v<std::exception_ptr>)
+    noexcept(noexcept(this->set_exception(std::current_exception())))
   { 
     TRACE_FUNC();
     this->set_exception(std::current_exception());

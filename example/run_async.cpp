@@ -49,8 +49,8 @@ mp_coro::task<int> boo()
     std::osyncstream(std::cout) << "This will never be printed\n";
     return 42;
   });
-  std::osyncstream(std::cout) << "Result: " << res << std::endl;
-  co_return 42;
+  std::osyncstream(std::cout) << "I will never tell you that the result is: " << res << std::endl;
+  co_return res;
 }
 
 mp_coro::task<> example()
@@ -59,10 +59,14 @@ mp_coro::task<> example()
   co_await boo();
 }
 
-void test(mp_coro::task<auto> t)
+template<typename T>
+void test(mp_coro::task<T> t)
 {
   try {
-    sync_wait(t);
+    if constexpr(std::is_void_v<T>)
+      sync_wait(t);
+    else
+      std::cout << "Result: " << sync_wait(t) << '\n';
   }
   catch(const std::exception& ex) {
     std::cout << "Exception caught: " << ex.what() << "\n";

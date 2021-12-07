@@ -42,7 +42,6 @@ public:
   struct promise_type : detail::task_promise_storage<T> {
     std::coroutine_handle<> continuation = std::noop_coroutine();
 
-    // coroutine protocol
     static std::suspend_always initial_suspend() noexcept
     { 
       TRACE_FUNC();
@@ -65,11 +64,10 @@ public:
     task<T> get_return_object() noexcept
     {
       TRACE_FUNC();
-      return static_cast<promise_type*>(this);
+      return this;
     }
   };
 
-  // coroutine protocol
   awaiter_of<void> auto operator co_await() const noexcept
     requires std::is_void_v<T>
   {

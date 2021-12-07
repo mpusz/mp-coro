@@ -36,7 +36,7 @@ mp_coro::task<int> bar()
   std::cout << "bar(): about to co_await\n";
   const int i = co_await result;
   std::cout << "i = " << i << '\n';
-  std::cout << "bar(): about to return\n" << std::endl;
+  std::cout << "bar(): about to return\n";
   co_return i + 23;
 }
 

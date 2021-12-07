@@ -26,6 +26,7 @@
 #include <cpp-coro/bits/task_promise_storage.h>
 #include <cpp-coro/coro_ptr.h>
 #include <cpp-coro/trace.h>
+#include <cpp-coro/type_traits.h>
 #include <coroutine>
 #include <semaphore>
 
@@ -41,10 +42,9 @@ class [[nodiscard]] sync_wait_task {
 public:
   using value_type = T;
   
-  struct promise_type : detail::task_promise_storage<T> {
+  struct promise_type : task_promise_storage<T> {
     std::binary_semaphore& signal;
 
-    // coroutine protocol
     static std::suspend_never initial_suspend() noexcept
     { 
       TRACE_FUNC();
@@ -69,29 +69,21 @@ public:
     sync_wait_task<T> get_return_object() noexcept
     {
       TRACE_FUNC();
-      return static_cast<promise_type*>(this);
+      return this;
     }
   };
 
   // custom functions
   [[nodiscard]] decltype(auto) get() const &
-    requires std::movable<T>
   {
     TRACE_FUNC();
     return promise_->get();
   }
 
   [[nodiscard]] decltype(auto) get() const &&
-    requires std::movable<T>
   {
     TRACE_FUNC();
     return std::move(promise_)->get();
-  }
-
-  [[nodiscard]] decltype(auto) get() const
-  {
-    TRACE_FUNC();
-    return promise_->get();
   }
 
 private:
@@ -105,19 +97,11 @@ private:
 
 // ********* SYNC WAIT CORO *********
 
-template<typename T>
-using result_of_await = decltype(get_awaiter(std::declval<T>()).await_resume());
-
 template<typename Awaitable>
-sync_wait_task<result_of_await<Awaitable&&>> sync_wait_coro(std::binary_semaphore&, Awaitable&& awaitable)
+sync_wait_task<await_result_t<Awaitable>> sync_wait_coro(std::binary_semaphore&, Awaitable&& awaitable)
 { 
   TRACE_FUNC();
-  if constexpr(std::is_same_v<result_of_await<Awaitable&&>, void>) {
-    co_await std::forward<Awaitable>(awaitable);
-  }
-  else {
-    co_return co_await std::forward<Awaitable>(awaitable);
-  }
+  co_return co_await std::forward<Awaitable>(awaitable);
 }
 
 } // namespace detail
@@ -126,13 +110,13 @@ sync_wait_task<result_of_await<Awaitable&&>> sync_wait_coro(std::binary_semaphor
 // ********* SYNC WAIT *********
 
 template<typename Awaitable>
-decltype(auto) sync_wait(Awaitable&& awaitable)
+[[nodiscard]] decltype(auto) sync_wait(Awaitable&& awaitable)
 {
   TRACE_FUNC();
   std::binary_semaphore signal(0);
-  auto t = detail::sync_wait_coro(signal, std::forward<Awaitable>(awaitable));
+  auto coro = detail::sync_wait_coro(signal, std::forward<Awaitable>(awaitable));
   signal.acquire();
-  return t.get();
+  return coro.get();
 }
 
 } // namespace mp_coro
