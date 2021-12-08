@@ -49,7 +49,7 @@ public:
       return {};
     }
 
-    static auto final_suspend() noexcept
+    static awaiter_of<void> auto final_suspend() noexcept
     {
       struct final_awaiter : std::suspend_always {
         std::coroutine_handle<> await_suspend(std::coroutine_handle<promise_type> this_coro) noexcept

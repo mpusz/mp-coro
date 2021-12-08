@@ -51,7 +51,7 @@ public:
       return {};
     }
 
-    static auto final_suspend() noexcept
+    static awaiter_of<void> auto final_suspend() noexcept
     {
       struct final_awaiter : std::suspend_always {
         void await_suspend(std::coroutine_handle<promise_type> this_coro) noexcept
@@ -97,11 +97,11 @@ private:
 
 // ********* SYNC WAIT CORO *********
 
-template<typename Awaitable>
-sync_wait_task<await_result_t<Awaitable>> sync_wait_coro(std::binary_semaphore&, Awaitable&& awaitable)
+template<awaitable A>
+sync_wait_task<await_result_t<A>> sync_wait_coro(std::binary_semaphore&, A&& awaitable)
 { 
   TRACE_FUNC();
-  co_return co_await std::forward<Awaitable>(awaitable);
+  co_return co_await std::forward<A>(awaitable);
 }
 
 } // namespace detail
@@ -109,12 +109,12 @@ sync_wait_task<await_result_t<Awaitable>> sync_wait_coro(std::binary_semaphore&,
 
 // ********* SYNC WAIT *********
 
-template<typename Awaitable>
-[[nodiscard]] decltype(auto) sync_wait(Awaitable&& awaitable)
+template<awaitable A>
+[[nodiscard]] decltype(auto) sync_wait(A&& awaitable)
 {
   TRACE_FUNC();
   std::binary_semaphore signal(0);
-  auto coro = detail::sync_wait_coro(signal, std::forward<Awaitable>(awaitable));
+  auto coro = detail::sync_wait_coro(signal, std::forward<A>(awaitable));
   signal.acquire();
   return coro.get();
 }
