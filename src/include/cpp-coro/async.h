@@ -55,7 +55,7 @@ public:
     TRACE_FUNC();
     std::jthread(work).detach();  // TODO: Fix that (replace with a thread pool)
   }
-  return_type await_resume() { TRACE_FUNC(); return std::move(result_).get(); }
+  decltype(auto) await_resume() { TRACE_FUNC(); return std::move(result_).get(); }
 private:
   Func func_;
   detail::storage<return_type> result_;
