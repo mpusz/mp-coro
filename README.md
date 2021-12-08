@@ -11,6 +11,9 @@ quality (at least I was not able to find them). As a result this library was ref
 in the hope that others will find it useful and that the C++ community can provide feedback on it and ways
 to improve it.
 
+Still, one of the main goals of the library is to provide clean, short, simple but powerful interfaces to help
+C++ engineers learn how C++ coroutines work.
+
 
 ## Acknowledgments
 
@@ -122,6 +125,8 @@ A concept that ensures that type `T` is an awaitable and that `await_resume()` r
 
 For example, the type `task<T>` implements the concept `awaitable_of<T&&>` whereas the type
 `task<T>&` implements the concept `awaitable_of<const T&>`.
+
+#### `coroutine_promise`
 
 
 ### `coro_ptr`
