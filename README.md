@@ -51,6 +51,27 @@ The design of this library is heavily influenced by:
 - Not default-constructible
 - Internal storage is not mutable for task lvalues (`const` reference returned to the user)
 
+```cpp
+static_assert(awaitable_of<task<int>, int&&>);
+static_assert(awaitable_of<task<int>&, const int&>);
+static_assert(awaitable_of<const task<int>&, const int&>);
+static_assert(awaitable_of<task<int>&&, int&&>);
+
+static_assert(awaitable_of<task<int&>, const int&>);
+static_assert(awaitable_of<task<int&>&, const int&>);
+static_assert(awaitable_of<const task<int&>&, const int&>);
+static_assert(awaitable_of<task<int&>&&, const int&>);
+
+static_assert(awaitable_of<task<const int&>, const int&>);
+static_assert(awaitable_of<task<const int&>&, const int&>);
+static_assert(awaitable_of<const task<const int&>&, const int&>);
+static_assert(awaitable_of<task<const int&>&&, const int&>);
+
+static_assert(awaitable_of<task<void>, void>);
+static_assert(awaitable_of<task<void>&, void>);
+static_assert(awaitable_of<const task<void>&, void>);
+static_assert(awaitable_of<task<void>&&, void>);
+```
 
 ### `sync_wait`
 
@@ -65,9 +86,14 @@ The design of this library is heavily influenced by:
 - As this is lazy synchronous generator a promise type does not waste space for storing
   `std::exception_ptr` but instead rethrows the exception right away
   - also no branches are taken in `begin()` and `operator++` to check if an exception should
-    be rethrown
+    be re-thrown
 - Returns `std::default_sentinel_t` from `end()` which immediately makes it usable with
   `std::counted_iterator` and possibly other facilities
+
+```cpp
+static_assert(!awaitable<generator<int>>);
+static_assert(std::ranges::input_range<generator<int>>);
+```
 
 
 ## New features
@@ -105,8 +131,32 @@ A `std::unique_ptr` with a custom deleter.
 
 ### `async`
 
-Awaitable that allows to asynchronously `co_await` on any invocable. More efficient than `std::async` as it never
-allocates memory for shared `std::promise`/`std::future` storage.
+Awaitable that allows to asynchronously `co_await` on any invocable. More efficient than `std::async`
+as it never allocates memory for shared `std::promise`/`std::future` storage.
+
+NOTE: `async` should be `co_await`ed only once.
+
+```cpp
+static_assert(awaitable_of<async<int(*)()>, int&&>);
+static_assert(awaitable_of<async<int(*)()>&, int&&>);
+static_assert(awaitable_of<async<int(*)()>&&, int&&>);
+static_assert(!awaitable<const async<int(*)()>&>);
+
+static_assert(awaitable_of<async<int&(*)()>, const int&>);
+static_assert(awaitable_of<async<int&(*)()>&, const int&>);
+static_assert(awaitable_of<async<int&(*)()>&&, const int&>);
+static_assert(!awaitable<const async<int&(*)()>&>);
+
+static_assert(awaitable_of<async<const int&(*)()>, const int&>);
+static_assert(awaitable_of<async<const int&(*)()>&, const int&>);
+static_assert(awaitable_of<async<const int&(*)()>&&, const int&>);
+static_assert(!awaitable<const async<const int&(*)()>&>);
+
+static_assert(awaitable_of<async<void(*)()>, void>);
+static_assert(awaitable_of<async<void(*)()>&, void>);
+static_assert(awaitable_of<async<void(*)()>&&, void>);
+static_assert(!awaitable<const async<int(*)()>&>);
+```
 
 
 ### `TRACE_FUNC()`
