@@ -26,6 +26,7 @@
 #include <cpp-coro/coro_ptr.h>
 #include <cpp-coro/concepts.h>
 #include <cpp-coro/trace.h>
+#include <cpp-coro/type_traits.h>
 #include <concepts>
 #include <coroutine>
 

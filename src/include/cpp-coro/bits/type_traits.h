@@ -22,16 +22,20 @@
 
 #pragma once
 
-#include <cpp-coro/bits/get_awaiter.h>
-#include <cpp-coro/bits/type_traits.h>
-#include <cpp-coro/concepts.h>
-
 namespace mp_coro {
 
-template<awaitable A>
-using awaiter_for_t = decltype(detail::get_awaiter(std::declval<A>()));
+namespace detail {
 
-template<awaitable A>
-using await_result_t = decltype(std::declval<awaiter_for_t<A>>().await_resume());
+// specialization_of
+template<typename T, template<typename...> typename Type>
+inline constexpr bool is_specialization_of = false;
 
-} // namespace mp_coro
+template<typename... Params, template<typename...> typename Type>
+inline constexpr bool is_specialization_of<Type<Params...>, Type> = true;
+
+}  // namespace detail
+
+template<typename T, template<typename...> typename Type>
+concept specialization_of = detail::is_specialization_of<T, Type>;
+
+}  // namespace mp_coro
