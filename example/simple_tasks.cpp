@@ -59,6 +59,14 @@ mp_coro::task<> empty()
   co_return;
 }
 
+mp_coro::task<> multiple_await()
+{
+  auto task = foo();
+  std::cout << "Result #1: " << co_await task << '\n';
+  std::cout << "Result #2: " << co_await task << '\n';
+  std::cout << "Result #3: " << co_await std::move(task) << '\n';
+}
+
 int main()
 {
   try {
@@ -66,6 +74,7 @@ int main()
     sync_wait(baz());
     sync_wait(empty());
     std::cout << sync_wait(ref()) << '\n';
+    sync_wait(multiple_await());
   }
   catch(const std::exception& ex) {
     std::cout << "Unhandled exception: " << ex.what() << '\n';
