@@ -71,7 +71,7 @@ public:
     result = std::addressof(value);
   }
 
-  [[nodiscard]] const T& get() const
+  [[nodiscard]] T& get() const
   {
     check_and_rethrow(this->result);
     return *std::get<T*>(this->result);

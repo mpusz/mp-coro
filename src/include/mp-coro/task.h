@@ -74,7 +74,7 @@ public:
     return awaiter(*promise_);
   }
 
-  awaiter_of<const std::remove_reference_t<T>&> auto operator co_await() const noexcept
+  awaiter_of<T&> auto operator co_await() const noexcept
     requires std::is_reference_v<T>
   {
     TRACE_FUNC();
