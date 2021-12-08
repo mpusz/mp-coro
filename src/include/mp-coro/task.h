@@ -67,27 +67,21 @@ public:
     }
   };
 
-  awaiter_of<void> auto operator co_await() const noexcept
-    requires std::is_void_v<T>
-  {
-    TRACE_FUNC();
-    return awaiter(*promise_);
-  }
-
-  awaiter_of<T&> auto operator co_await() const noexcept
-    requires std::is_reference_v<T>
+  awaiter_of<T> auto operator co_await() const noexcept
   {
     TRACE_FUNC();
     return awaiter(*promise_);
   }
 
   awaiter_of<const T&> auto operator co_await() const & noexcept
+    requires std::movable<T>
   {
     TRACE_FUNC();
     return awaiter(*promise_);
   }
 
   awaiter_of<T&&> auto operator co_await() const && noexcept
+    requires std::movable<T>
   {
     TRACE_FUNC();
 
