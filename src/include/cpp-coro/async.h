@@ -27,7 +27,6 @@
 #include <concepts>
 #include <coroutine>
 #include <thread>
-#include <variant>
 
 namespace mp_coro {
 

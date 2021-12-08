@@ -32,8 +32,6 @@
 
 namespace mp_coro {
 
-// ********* TASK *********
-
 template<typename T = void>
   requires std::movable<T> || std::is_reference_v<T> || std::is_void_v<T>
 class [[nodiscard]] task {
