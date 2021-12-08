@@ -70,7 +70,8 @@ mp_coro::task<> multiple_await()
 int main()
 {
   try {
-    std::cout << "i = " << sync_wait(bar()) << '\n';
+    auto task = bar();
+    std::cout << "i = " << sync_wait(task) << '\n';
     sync_wait(baz());
     sync_wait(empty());
     std::cout << sync_wait(ref()) << '\n';
