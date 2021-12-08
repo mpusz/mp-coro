@@ -100,6 +100,4 @@ private:
   generator(promise_type* promise): promise_(promise) {}
 };
 
-static_assert(std::ranges::input_range<generator<int>>);
-
 } // namespace mp_coro

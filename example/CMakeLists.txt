@@ -33,6 +33,7 @@ endfunction()
 find_package(Threads REQUIRED)
 
 add_example(async_read_file mp-coro::mp-coro Threads::Threads)
+add_example(concepts mp-coro::mp-coro)
 add_example(generator mp-coro::mp-coro)
 add_example(run_async mp-coro::mp-coro Threads::Threads)
 add_example(simple_async_tasks mp-coro::mp-coro Threads::Threads)
