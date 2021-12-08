@@ -61,12 +61,13 @@ concept suspend_return_type =
 } // namespace detail
 
 template<typename T>
-concept awaiter = requires(T&& t) {
-  { std::forward<T>(t).await_ready() } -> std::convertible_to<bool>;
-  { detail::func_arg(&std::remove_reference_t<T>::await_suspend) } -> std::convertible_to<std::coroutine_handle<>>; // TODO Why gcc does not inherit from `std::coroutine_handle<>`?
-  { std::forward<T>(t).await_suspend(std::declval<decltype(detail::func_arg(&std::remove_reference_t<T>::await_suspend))>()) } -> detail::suspend_return_type;
-  std::forward<T>(t).await_resume();
-};
+concept awaiter =
+  requires(T&& t, decltype(detail::func_arg(&std::remove_reference_t<T>::await_suspend)) suspend_arg) {
+    { std::forward<T>(t).await_ready() } -> std::convertible_to<bool>;
+    { suspend_arg } -> std::convertible_to<std::coroutine_handle<>>; // TODO Why gcc does not inherit from `std::coroutine_handle<>`?
+    { std::forward<T>(t).await_suspend(suspend_arg) } -> detail::suspend_return_type;
+    std::forward<T>(t).await_resume();
+  };
 
 template<typename T, typename Value>
 concept awaiter_of = awaiter<T> && requires(T&& t) {
