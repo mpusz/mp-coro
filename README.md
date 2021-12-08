@@ -55,21 +55,25 @@ The design of this library is heavily influenced by:
 - Internal storage is not mutable for task lvalues (`const` reference returned to the user)
 
 ```cpp
+// task<int>
 static_assert(awaitable_of<task<int>, int&&>);
 static_assert(awaitable_of<task<int>&, const int&>);
 static_assert(awaitable_of<const task<int>&, const int&>);
 static_assert(awaitable_of<task<int>&&, int&&>);
 
+// task<int&>
 static_assert(awaitable_of<task<int&>, const int&>);
 static_assert(awaitable_of<task<int&>&, const int&>);
 static_assert(awaitable_of<const task<int&>&, const int&>);
 static_assert(awaitable_of<task<int&>&&, const int&>);
 
+// task<const int&>
 static_assert(awaitable_of<task<const int&>, const int&>);
 static_assert(awaitable_of<task<const int&>&, const int&>);
 static_assert(awaitable_of<const task<const int&>&, const int&>);
 static_assert(awaitable_of<task<const int&>&&, const int&>);
 
+// task<void>
 static_assert(awaitable_of<task<void>, void>);
 static_assert(awaitable_of<task<void>&, void>);
 static_assert(awaitable_of<const task<void>&, void>);
@@ -126,9 +130,6 @@ A concept that ensures that type `T` is an awaitable and that `await_resume()` r
 For example, the type `task<T>` implements the concept `awaitable_of<T&&>` whereas the type
 `task<T>&` implements the concept `awaitable_of<const T&>`.
 
-#### `coroutine_promise`
-
-
 ### `coro_ptr`
 
 A `std::unique_ptr` with a custom deleter.
@@ -142,21 +143,25 @@ as it never allocates memory for shared `std::promise`/`std::future` storage.
 NOTE: `async` should be `co_await`ed only once.
 
 ```cpp
+// async<int(*)()>
 static_assert(awaitable_of<async<int(*)()>, int&&>);
 static_assert(awaitable_of<async<int(*)()>&, int&&>);
 static_assert(awaitable_of<async<int(*)()>&&, int&&>);
 static_assert(!awaitable<const async<int(*)()>&>);
 
+// async<int&(*)()>
 static_assert(awaitable_of<async<int&(*)()>, const int&>);
 static_assert(awaitable_of<async<int&(*)()>&, const int&>);
 static_assert(awaitable_of<async<int&(*)()>&&, const int&>);
 static_assert(!awaitable<const async<int&(*)()>&>);
 
+// async<const int&(*)()>
 static_assert(awaitable_of<async<const int&(*)()>, const int&>);
 static_assert(awaitable_of<async<const int&(*)()>&, const int&>);
 static_assert(awaitable_of<async<const int&(*)()>&&, const int&>);
 static_assert(!awaitable<const async<const int&(*)()>&>);
 
+// async<void(*)()>
 static_assert(awaitable_of<async<void(*)()>, void>);
 static_assert(awaitable_of<async<void(*)()>&, void>);
 static_assert(awaitable_of<async<void(*)()>&&, void>);
