@@ -38,9 +38,9 @@ The design of this library is heavily influenced by:
   - using `[[nodiscard]]` attributes in much more places
   - `storage<T>` class template
     - responsible for storage of the result or the current exception
-    - implementation uses on `std::variant` under the hood
+    - implementation uses `std::variant` under the hood
     - interface similar to `std::promise`/`std::future` pair
-    - could be replaced with `std::expected` proposed in [P0323](https://wg21.link/p0323)
+    - could be replaced with `std::expected` proposed in [P0323](https://wg21.link/p0323) in the future
     - used in `task`, `sync_wait`, and `async`
   - `task_promise_storage<T>` class template
     - separates coroutine promise logic from its storage
@@ -100,6 +100,25 @@ static_assert(awaitable_of<task<void>&&, void>);
 ```cpp
 static_assert(!awaitable<generator<int>>);
 static_assert(std::ranges::input_range<generator<int>>);
+```
+
+```cpp
+mp_coro::generator<std::uint64_t> fibonacci()
+{
+  std::uint64_t a = 0, b = 1;
+  while (true) {
+    co_yield b;
+    a = std::exchange(b, a + b);
+  }
+}
+
+void f()
+{
+  auto gen = fibonacci();
+  for(auto i : std::views::counted(gen.begin(), 10))
+    std::cout << i << ' ';
+  std::cout << '\n';
+}
 ```
 
 
