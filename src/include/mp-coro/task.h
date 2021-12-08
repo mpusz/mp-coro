@@ -22,11 +22,11 @@
 
 #pragma once
 
-#include <cpp-coro/bits/task_promise_storage.h>
-#include <cpp-coro/coro_ptr.h>
-#include <cpp-coro/concepts.h>
-#include <cpp-coro/trace.h>
-#include <cpp-coro/type_traits.h>
+#include <mp-coro/bits/task_promise_storage.h>
+#include <mp-coro/coro_ptr.h>
+#include <mp-coro/concepts.h>
+#include <mp-coro/trace.h>
+#include <mp-coro/type_traits.h>
 #include <concepts>
 #include <coroutine>
 

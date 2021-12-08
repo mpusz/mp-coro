@@ -20,7 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#include <cpp-coro/generator.h>
+#include <mp-coro/generator.h>
 #include <cstdint>
 #include <iostream>
 #include <ranges>

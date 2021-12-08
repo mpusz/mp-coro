@@ -20,9 +20,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#include <cpp-coro/sync_wait.h>
-#include <cpp-coro/task.h>
-#include <cpp-coro/type_traits.h>
+#include <mp-coro/sync_wait.h>
+#include <mp-coro/task.h>
+#include <mp-coro/type_traits.h>
 #include <chrono>
 #include <iostream>
 #include <thread>

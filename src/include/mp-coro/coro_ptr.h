@@ -22,40 +22,24 @@
 
 #pragma once
 
-#include <cpp-coro/bits/storage.h>
-#include <cpp-coro/trace.h>
-#include <concepts>
+#include <mp-coro/trace.h>
+#include <memory>
+#include <coroutine>
 
-namespace mp_coro::detail {
+namespace mp_coro {
 
-template<typename T>
-struct task_promise_storage_base : storage<T> {
-  void unhandled_exception()
-    noexcept(noexcept(this->set_exception(std::current_exception())))
-  { 
-    TRACE_FUNC();
-    this->set_exception(std::current_exception());
-  }
-};
-
-template<typename T>
-struct task_promise_storage : task_promise_storage_base<T> {
-  template<typename U>
-  void return_value(U&& value)
-    noexcept(noexcept(this->set_value(std::forward<U>(value))))
-    requires requires { this->set_value(std::forward<U>(value)); }
+struct coro_deleter {
+  template<typename Promise>
+  void operator()(Promise* promise) const noexcept
   {
     TRACE_FUNC();
-    this->set_value(std::forward<U>(value));
+    auto handle = std::coroutine_handle<Promise>::from_promise(*promise);
+    if(handle)
+      handle.destroy();
   }
 };
 
-template<>
-struct task_promise_storage<void> : task_promise_storage_base<void> {
-  void return_void() noexcept
-  {
-    TRACE_FUNC();
-  }
-};
+template<typename T>
+using promise_ptr = std::unique_ptr<T, coro_deleter>;
 
-} // namespace mp_coro::detail
+} // namespace mp_coro

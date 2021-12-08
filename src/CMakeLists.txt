@@ -40,13 +40,14 @@ if(${projectPrefix}AS_SYSTEM_HEADERS)
 endif()
 
 add_library(mp-coro INTERFACE
-    include/cpp-coro/async.h
-    include/cpp-coro/concepts.h
-    include/cpp-coro/coro_ptr.h
-    include/cpp-coro/sync_wait.h
-    include/cpp-coro/task.h
-    include/cpp-coro/trace.h
-    include/cpp-coro/type_traits.h
+    include/mp-coro/async.h
+    include/mp-coro/concepts.h
+    include/mp-coro/coro_ptr.h
+    include/mp-coro/generator.h
+    include/mp-coro/sync_wait.h
+    include/mp-coro/task.h
+    include/mp-coro/trace.h
+    include/mp-coro/type_traits.h
 )
 target_compile_features(mp-coro INTERFACE cxx_std_20)
 target_include_directories(mp-coro ${coroAsSystem} INTERFACE

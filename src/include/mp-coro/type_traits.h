@@ -22,24 +22,16 @@
 
 #pragma once
 
-#include <cpp-coro/trace.h>
-#include <memory>
-#include <coroutine>
+#include <mp-coro/bits/get_awaiter.h>
+#include <mp-coro/bits/type_traits.h>
+#include <mp-coro/concepts.h>
 
 namespace mp_coro {
 
-struct coro_deleter {
-  template<typename Promise>
-  void operator()(Promise* promise) const noexcept
-  {
-    TRACE_FUNC();
-    auto handle = std::coroutine_handle<Promise>::from_promise(*promise);
-    if(handle)
-      handle.destroy();
-  }
-};
+template<awaitable A>
+using awaiter_for_t = decltype(detail::get_awaiter(std::declval<A>()));
 
-template<typename T>
-using promise_ptr = std::unique_ptr<T, coro_deleter>;
+template<awaitable A>
+using await_result_t = decltype(std::declval<awaiter_for_t<A>>().await_resume());
 
 } // namespace mp_coro

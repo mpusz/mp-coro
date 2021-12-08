@@ -22,8 +22,8 @@
 
 #pragma once
 
-#include <cpp-coro/bits/get_awaiter.h>
-#include <cpp-coro/bits/type_traits.h>
+#include <mp-coro/bits/get_awaiter.h>
+#include <mp-coro/bits/type_traits.h>
 #include <concepts>
 #include <coroutine>
 

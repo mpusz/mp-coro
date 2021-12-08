@@ -22,8 +22,8 @@
 
 #pragma once
 
-#include <cpp-coro/bits/storage.h>
-#include <cpp-coro/trace.h>
+#include <mp-coro/bits/storage.h>
+#include <mp-coro/trace.h>
 #include <concepts>
 #include <coroutine>
 #include <thread>

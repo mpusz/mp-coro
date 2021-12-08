@@ -22,8 +22,8 @@
 
 #pragma once
 
-#include <cpp-coro/coro_ptr.h>
-#include <cpp-coro/trace.h>
+#include <mp-coro/coro_ptr.h>
+#include <mp-coro/trace.h>
 #include <concepts>
 #include <coroutine>
 #include <optional>
