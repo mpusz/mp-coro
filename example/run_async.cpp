@@ -78,6 +78,7 @@ int main()
   try {
     test(example());
     test(boo());
+    test(mp_coro::make_task(mp_coro::async([]{ return 123; })));
   }
   catch(const std::exception& ex) {
     std::cout << "Unhandled exception: " << ex.what() << "\n";

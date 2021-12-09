@@ -127,4 +127,11 @@ private:
   };
 };
 
+template<awaitable A>
+task<remove_rvalue_reference_t<await_result_t<A>>> make_task(A&& awaitable)
+{
+  TRACE_FUNC();
+  co_return co_await std::forward<A>(awaitable);
+}
+
 } // namespace mp_coro

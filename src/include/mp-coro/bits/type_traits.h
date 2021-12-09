@@ -38,4 +38,14 @@ inline constexpr bool is_specialization_of<Type<Params...>, Type> = true;
 template<typename T, template<typename...> typename Type>
 concept specialization_of = detail::is_specialization_of<T, Type>;
 
+// remove_rvalue_reference
+template<typename T>
+struct remove_rvalue_reference { using type = T; };
+
+template<typename T>
+struct remove_rvalue_reference<T&&> { using type = T; };
+
+template<typename T>
+using remove_rvalue_reference_t = remove_rvalue_reference<T>::type;
+
 }  // namespace mp_coro
