@@ -36,15 +36,22 @@ The design of this library is heavily influenced by:
   - usage of C++20 concepts
   - usage of other C++20 features (i.e. spaceship operator)
   - using `[[nodiscard]]` attributes in much more places
+  - `synchronized_task<Sync, T>` class template
+    - task coroutine return type for handling non-standard (coroutine-like) synchronization
+    - takes a synchronization primitive as the first template parameter
+    - used in `sync_wait` and `when_all`
   - `storage<T>` class template
     - responsible for storage of the result or the current exception
     - implementation uses `std::variant` under the hood
     - interface similar to `std::promise`/`std::future` pair
     - could be replaced with `std::expected` proposed in [P0323](https://wg21.link/p0323) in the future
-    - used in `task`, `sync_wait`, and `async`
+    - used in `task`, `synchronized_task`, and `async`
+  - `nonvoid_storage<T>` class template
+    - returns `void_type` for a task of `void`
+    - needed for `when_all`
   - `task_promise_storage<T>` class template
     - separates coroutine promise logic from its storage
-    - used in `task` and `sync_wait`
+    - used in `task` and `synchronized_task`
     - NOTE: It is an undefined behavior to have `return_value()` and `return_result` in a coroutine
       promise type (even if mutually exclusive thanks to constraining with C++20 concepts) :-(
 
@@ -80,9 +87,15 @@ static_assert(awaitable_of<const task<void>&, void>);
 static_assert(awaitable_of<task<void>&&, void>);
 ```
 
-### `sync_wait`
+### `sync_wait()`
 
 - Uses `std::binary_semaphore` for synchronization
+- Much cleaner and shorter design
+
+
+### `when_all()`
+
+- Returns and instance of `void_type` in a tuple of results in case of `awaitable_of<void>`
 - Much cleaner and shorter design
 
 
@@ -148,6 +161,12 @@ A concept that ensures that type `T` is an awaitable and that `await_resume()` r
 
 For example, the type `task<T>` implements the concept `awaitable_of<T&&>` whereas the type
 `task<T>&` implements the concept `awaitable_of<const T&>`.
+
+#### `task_result<T>`
+
+A concept that ensures that the task result type is either `std::move_constructible` or a
+reference or a `void` type.
+
 
 ### `coro_ptr`
 
