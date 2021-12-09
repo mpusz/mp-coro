@@ -33,7 +33,7 @@
 namespace mp_coro {
 
 template<typename T = void>
-  requires std::movable<T> || std::is_reference_v<T> || std::is_void_v<T>
+  requires std::move_constructible<T> || std::is_reference_v<T> || std::is_void_v<T>
 class [[nodiscard]] task {
 public:
   using value_type = T;
@@ -74,14 +74,14 @@ public:
   }
 
   awaiter_of<const T&> auto operator co_await() const & noexcept
-    requires std::movable<T>
+    requires std::move_constructible<T>
   {
     TRACE_FUNC();
     return awaiter(*promise_);
   }
 
   awaiter_of<T&&> auto operator co_await() const && noexcept
-    requires std::movable<T>
+    requires std::move_constructible<T>
   {
     TRACE_FUNC();
 
