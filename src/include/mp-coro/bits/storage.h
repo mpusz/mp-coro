@@ -92,6 +92,7 @@ public:
 template<typename T>
 class storage : public storage_base<T> {
 public:
+  using value_type = T;
   void set_exception(std::exception_ptr ptr) noexcept
   {
     this->result = std::move(ptr);

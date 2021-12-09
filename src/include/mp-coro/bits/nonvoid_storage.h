@@ -22,40 +22,40 @@
 
 #pragma once
 
-#include <mp-coro/bits/nonvoid_storage.h>
-#include <mp-coro/trace.h>
-#include <concepts>
+#include <mp-coro/bits/storage.h>
+#include <mp-coro/type_traits.h>
 
-namespace mp_coro::detail {
+namespace mp_coro {
 
-template<typename T>
-struct task_promise_storage_base : nonvoid_storage<T> {
-  void unhandled_exception()
-    noexcept(noexcept(this->set_exception(std::current_exception())))
-  { 
-    TRACE_FUNC();
-    this->set_exception(std::current_exception());
-  }
-};
+struct void_type {};
 
 template<typename T>
-struct task_promise_storage : task_promise_storage_base<T> {
-  template<typename U>
-  void return_value(U&& value)
-    noexcept(noexcept(this->set_value(std::forward<U>(value))))
-    requires requires { this->set_value(std::forward<U>(value)); }
-  {
-    TRACE_FUNC();
-    this->set_value(std::forward<U>(value));
-  }
+using nonvoid_await_result_t = std::conditional_t<std::is_void_v<await_result_t<T>>, void_type, await_result_t<T>>;
+
+namespace detail {
+
+template<typename T>
+class nonvoid_storage : public storage<T> {
+public:
+  using value_type = storage<T>::value_type;
+
+  [[nodiscard]] const value_type& nonvoid_get() const & { return this->get(); }
+  [[nodiscard]] value_type&& nonvoid_get() && { return std::move(*this).get(); }
+
+  [[nodiscard]] T& nonvoid_get() const requires std::is_reference_v<T> { return this->get(); }
 };
 
 template<>
-struct task_promise_storage<void> : task_promise_storage_base<void> {
-  void return_void() noexcept
+class nonvoid_storage<void> : public storage<void> {
+public:
+  using value_type = void_type;
+
+  [[nodiscard]] void_type nonvoid_get() const
   {
-    TRACE_FUNC();
+    check_and_rethrow(this->result);
+    return void_type{};
   }
 };
 
-} // namespace mp_coro::detail
+} // namespace detail
+} // namespace mp_coro
