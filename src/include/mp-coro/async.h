@@ -35,27 +35,37 @@ class async {
 public:
   using return_type = std::invoke_result_t<Func>;
   explicit async(Func func): func_{std::move(func)} {}
-  static bool await_ready() noexcept { TRACE_FUNC(); return false; }
-  void await_suspend(std::coroutine_handle<> handle)
-  {
-    auto work = [&, handle]() {
-      TRACE_FUNC();
-      try {
-        if constexpr(std::is_void_v<return_type>)
-          func_();
-        else
-          result_.set_value(func_());
-      }
-      catch(...) {
-        result_.set_exception(std::current_exception());
-      }
-      handle.resume();
-    };
 
-    TRACE_FUNC();
-    std::jthread(work).detach();  // TODO: Fix that (replace with a thread pool)
+  decltype(auto) operator co_await() & = delete; // async should be co_awaited only once (on rvalue)
+  decltype(auto) operator co_await() &&
+  {
+    struct awaiter {
+      async& awaitable;
+
+      bool await_ready() const noexcept { TRACE_FUNC(); return false; }
+      void await_suspend(std::coroutine_handle<> handle)
+      {
+        auto work = [&, handle]() {
+          TRACE_FUNC();
+          try {
+            if constexpr(std::is_void_v<return_type>)
+              awaitable.func_();
+            else
+              awaitable.result_.set_value(awaitable.func_());
+          }
+          catch(...) {
+            awaitable.result_.set_exception(std::current_exception());
+          }
+          handle.resume();
+        };
+
+        TRACE_FUNC();
+        std::jthread(work).detach();  // TODO: Fix that (replace with a thread pool)
+      }
+      decltype(auto) await_resume() { TRACE_FUNC(); return std::move(awaitable.result_).get(); }
+    };
+    return awaiter{*this};
   }
-  decltype(auto) await_resume() { TRACE_FUNC(); return std::move(result_).get(); }
 private:
   Func func_;
   detail::storage<return_type> result_;

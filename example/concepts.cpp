@@ -35,26 +35,26 @@ static_assert(awaitable_of<std::suspend_always, void>);
 
 // async<int(*)()>
 static_assert(awaitable_of<async<int(*)()>, int&&>);
-static_assert(awaitable_of<async<int(*)()>&, int&&>);
 static_assert(awaitable_of<async<int(*)()>&&, int&&>);
+static_assert(!awaitable<async<int(*)()>&>);
 static_assert(!awaitable<const async<int(*)()>&>);
 
 // async<int&(*)()>
 static_assert(awaitable_of<async<int&(*)()>, int&>);
-static_assert(awaitable_of<async<int&(*)()>&, int&>);
 static_assert(awaitable_of<async<int&(*)()>&&, int&>);
+static_assert(!awaitable<async<int&(*)()>&>);
 static_assert(!awaitable<const async<int&(*)()>&>);
 
 // async<const int&(*)()>
 static_assert(awaitable_of<async<const int&(*)()>, const int&>);
-static_assert(awaitable_of<async<const int&(*)()>&, const int&>);
 static_assert(awaitable_of<async<const int&(*)()>&&, const int&>);
+static_assert(!awaitable<async<const int&(*)()>&>);
 static_assert(!awaitable<const async<const int&(*)()>&>);
 
 // async<void(*)()>
 static_assert(awaitable_of<async<void(*)()>, void>);
-static_assert(awaitable_of<async<void(*)()>&, void>);
 static_assert(awaitable_of<async<void(*)()>&&, void>);
+static_assert(!awaitable<async<void(*)()>&>);
 static_assert(!awaitable<const async<int(*)()>&>);
 
 // task<int>

@@ -178,31 +178,31 @@ A `std::unique_ptr` with a custom deleter.
 Awaitable that allows to asynchronously `co_await` on any invocable. More efficient than `std::async`
 as it never allocates memory for shared `std::promise`/`std::future` storage.
 
-NOTE: `async` should be `co_await`ed only once.
+NOTE: `async` should be `co_await`ed only once and that is why it works only for rvalues.
 
 ```cpp
 // async<int(*)()>
 static_assert(awaitable_of<async<int(*)()>, int&&>);
-static_assert(awaitable_of<async<int(*)()>&, int&&>);
 static_assert(awaitable_of<async<int(*)()>&&, int&&>);
+static_assert(!awaitable<async<int(*)()>&>);
 static_assert(!awaitable<const async<int(*)()>&>);
 
 // async<int&(*)()>
 static_assert(awaitable_of<async<int&(*)()>, int&>);
-static_assert(awaitable_of<async<int&(*)()>&, int&>);
 static_assert(awaitable_of<async<int&(*)()>&&, int&>);
+static_assert(!awaitable<async<int&(*)()>&>);
 static_assert(!awaitable<const async<int&(*)()>&>);
 
 // async<const int&(*)()>
 static_assert(awaitable_of<async<const int&(*)()>, const int&>);
-static_assert(awaitable_of<async<const int&(*)()>&, const int&>);
 static_assert(awaitable_of<async<const int&(*)()>&&, const int&>);
+static_assert(!awaitable<async<const int&(*)()>&>);
 static_assert(!awaitable<const async<const int&(*)()>&>);
 
 // async<void(*)()>
 static_assert(awaitable_of<async<void(*)()>, void>);
-static_assert(awaitable_of<async<void(*)()>&, void>);
 static_assert(awaitable_of<async<void(*)()>&&, void>);
+static_assert(!awaitable<async<void(*)()>&>);
 static_assert(!awaitable<const async<int(*)()>&>);
 ```
 
