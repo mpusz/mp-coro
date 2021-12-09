@@ -38,26 +38,25 @@ void check_and_rethrow(const std::variant<Args...>& result)
 template<typename T>
 class storage_base {
 protected:
-  using value_type = std::remove_reference_t<T>;  // in case of T&&
-  std::variant<std::monostate, std::exception_ptr, value_type> result;
+  std::variant<std::monostate, std::exception_ptr, T> result;
 public:
-  template<std::convertible_to<value_type> U>
+  template<std::convertible_to<T> U>
   void set_value(U&& value)
-    noexcept(std::is_nothrow_constructible_v<value_type, decltype(std::forward<U>(value))>)
+    noexcept(std::is_nothrow_constructible_v<T, decltype(std::forward<U>(value))>)
   {
-    result.template emplace<value_type>(std::forward<U>(value));
+    result.template emplace<T>(std::forward<U>(value));
   }
 
-  [[nodiscard]] const value_type& get() const &
+  [[nodiscard]] const T& get() const &
   {
     check_and_rethrow(this->result);
-    return std::get<value_type>(this->result);
+    return std::get<T>(this->result);
   }
 
-  [[nodiscard]] value_type&& get() &&
+  [[nodiscard]] T&& get() &&
   {
     check_and_rethrow(this->result);
-    return std::get<value_type>(std::move(this->result));
+    return std::get<T>(std::move(this->result));
   }
 };
 
