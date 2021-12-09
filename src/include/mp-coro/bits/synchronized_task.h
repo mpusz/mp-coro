@@ -30,8 +30,8 @@
 
 namespace mp_coro::detail {
 
-template<typename Sync, typename T>
-  requires std::move_constructible<T> || std::is_reference_v<T> || std::is_void_v<T>
+template<typename Sync, task_result T>
+  requires requires(Sync s) { s.notify_awaitable_completed(); }
 class [[nodiscard]] synchronized_task {
 public:
   using value_type = T;

@@ -32,8 +32,7 @@
 
 namespace mp_coro {
 
-template<typename T = void>
-  requires std::move_constructible<T> || std::is_reference_v<T> || std::is_void_v<T>
+template<task_result T = void>
 class [[nodiscard]] task {
 public:
   using value_type = T;
