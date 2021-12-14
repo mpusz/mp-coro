@@ -34,7 +34,9 @@ template<std::invocable Func>
 class async {
 public:
   using return_type = std::invoke_result_t<Func>;
-  explicit async(Func func): func_{std::move(func)} {}
+  template<typename F>
+    requires std::same_as<std::remove_cvref_t<F>, Func>
+  explicit async(F&& func): func_{std::forward<F>(func)} {}
 
   decltype(auto) operator co_await() & = delete; // async should be co_awaited only once (on rvalue)
   decltype(auto) operator co_await() &&
@@ -70,5 +72,8 @@ private:
   Func func_;
   detail::storage<return_type> result_;
 };
+
+template<typename F>
+async(F) -> async<F>;
 
 } // namespace mp_coro
