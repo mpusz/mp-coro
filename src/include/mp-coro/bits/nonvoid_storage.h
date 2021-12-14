@@ -37,7 +37,7 @@ namespace detail {
 template<typename T>
 class nonvoid_storage : public storage<T> {
 public:
-  using value_type = storage<T>::value_type;
+  using value_type = typename storage<T>::value_type;
 
   [[nodiscard]] const value_type& nonvoid_get() const & { return this->get(); }
   [[nodiscard]] value_type&& nonvoid_get() && { return std::move(*this).get(); }
