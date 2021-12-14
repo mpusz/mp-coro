@@ -65,6 +65,9 @@ public:
     }
   };
 
+  synchronized_task(synchronized_task&&) = default;
+  synchronized_task& operator=(synchronized_task&&) = delete;
+
   // custom functions
   void start(Sync& s)
   {

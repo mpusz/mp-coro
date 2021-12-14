@@ -66,6 +66,9 @@ public:
     }
   };
 
+  task(task&&) = default;
+  task& operator=(task&&) = delete;
+
   awaiter_of<T> auto operator co_await() const noexcept
   {
     TRACE_FUNC();
