@@ -29,26 +29,19 @@
 #include <atomic>
 #include <coroutine>
 #include <cstdint>
+#include <ranges>
 #include <tuple>
+#include <vector>
 
 namespace mp_coro {
 
 namespace detail {
 
-  template<typename T>
-  static decltype(auto) make_when_all_result(T&& t)
-  {
-    return std::apply([&]<typename... Tasks>(Tasks&&... tasks) {
-      using ret_type = std::tuple<remove_rvalue_reference_t<decltype(std::forward<Tasks>(tasks).nonvoid_get())>...>;
-      return ret_type(std::forward<Tasks>(tasks).nonvoid_get()...);
-    }, std::forward<T>(t));
-  }
-
 class when_all_sync {
-  std::atomic<std::intmax_t> counter_;
+  std::atomic<std::size_t> counter_;
   std::coroutine_handle<> continuation_;
 public:
-  constexpr when_all_sync(std::intmax_t count) noexcept
+  constexpr when_all_sync(std::size_t count) noexcept
     : counter_(count + 1) // +1 for attaching a continuation
   {}
   when_all_sync(when_all_sync&& other) noexcept
@@ -79,39 +72,118 @@ public:
   }
 };
 
-template<specialization_of<std::tuple> Tuple>
-struct when_all_awaitable {
-  explicit when_all_awaitable(Tuple&& tuple): tasks_(std::move(tuple)) {}
 
-  bool await_ready() const noexcept { TRACE_FUNC(); return sync_.is_ready(); }
-  bool await_suspend(std::coroutine_handle<> handle)
-  {
-    TRACE_FUNC();
-    std::apply([&](auto&&... tasks){ (..., tasks.start(sync_)); }, tasks_);
-    return sync_.set_continuation(handle);
+template<typename T>
+std::size_t tasks_size(T& container)
+{
+  if constexpr(std::ranges::range<T>)
+    return size(container);
+  else
+    return std::tuple_size_v<T>;
+}
+
+template<typename T>
+decltype(auto) start_all_tasks(T& container, when_all_sync& sync)
+{
+  if constexpr(std::ranges::range<T>)
+    for(auto& t : container) t.start(sync);
+  else
+    std::apply([&](auto&... tasks){ (..., tasks.start(sync)); }, container);
+}
+
+template<typename T>
+decltype(auto) make_all_results(T&& container)
+{
+  if constexpr(std::ranges::range<T>) {
+    if constexpr(std::is_void_v<typename std::ranges::range_value_t<T>::value_type>) {
+      // in case of `void` check for exception and do not return any result
+      for(auto& task : container)
+        task.get();
+    }
+    else {
+      std::vector<typename std::ranges::range_value_t<T>::value_type> result;
+      result.reserve(size(container));
+      for(auto&& task : std::forward<T>(container))
+        result.emplace_back(std::forward<decltype(task)>(task).get());
+      return result;
+    }
   }
-  decltype(auto) await_resume() &
-  {
-    TRACE_FUNC();
-    return make_when_all_result(tasks_);
+  else {
+    return std::apply([&]<typename... Tasks>(Tasks&&... tasks) {
+      if constexpr((... && std::is_void_v<typename std::remove_cvref_t<Tasks>::value_type>)) {
+        // in case of all `void` check for exception and do not return any result
+        (..., tasks.get());
+      }
+      else {
+        using ret_type = std::tuple<remove_rvalue_reference_t<decltype(std::forward<Tasks>(tasks).nonvoid_get())>...>;
+        return ret_type(std::forward<Tasks>(tasks).nonvoid_get()...);
+      }
+    }, std::forward<T>(container));
   }
-  decltype(auto) await_resume() &&
+}
+
+template<typename T>
+struct when_all_awaitable {
+  explicit when_all_awaitable(T&& tasks): tasks_(std::move(tasks)) {}
+
+  decltype(auto) operator co_await() &
   {
-    TRACE_FUNC();
-    return make_when_all_result(std::move(tasks_));
+    struct awaiter : awaiter_base {
+      decltype(auto) await_resume()
+      {
+        TRACE_FUNC();
+        return make_all_results(this->awaitable.tasks_);
+      }
+    };
+    return awaiter{{*this}};
   }
+
+  decltype(auto) operator co_await() &&
+  {
+    struct awaiter : awaiter_base {
+      decltype(auto) await_resume()
+      {
+        TRACE_FUNC();
+        return make_all_results(std::move(this->awaitable.tasks_));
+      }
+    };
+    return awaiter{{*this}};
+  }
+
 private:
-  Tuple tasks_;
-  when_all_sync sync_ = std::tuple_size_v<Tuple>;
+  struct awaiter_base {
+    when_all_awaitable& awaitable;
+
+    bool await_ready() const noexcept { TRACE_FUNC(); return awaitable.sync_.is_ready(); }
+    bool await_suspend(std::coroutine_handle<> handle)
+    {
+      TRACE_FUNC();
+      start_all_tasks(awaitable.tasks_, awaitable.sync_);
+      return awaitable.sync_.set_continuation(handle);
+    }
+  };
+  T tasks_;
+  when_all_sync sync_ = tasks_size(tasks_);
 };
 
 } // namespace detail
 
 template<awaitable... Awaitables>
-awaitable_of<std::tuple<remove_rvalue_reference_t<nonvoid_await_result_t<Awaitables>>...>> auto when_all(Awaitables&&... awaitables)
+awaitable auto when_all(Awaitables&&... awaitables)
 {
   TRACE_FUNC();
   return detail::when_all_awaitable(std::make_tuple(detail::make_synchronized_task<detail::when_all_sync>(std::forward<Awaitables>(awaitables))...));
+}
+
+template<std::ranges::range R>
+awaitable auto when_all(R&& awaitables)
+{
+  TRACE_FUNC();
+  std::vector<detail::synchronized_task<detail::when_all_sync, await_result_t<std::ranges::range_reference_t<R>>>> tasks;
+  tasks.reserve(size(awaitables));
+  for(auto&& awaitable : std::forward<R>(awaitables))
+    tasks.emplace_back(detail::make_synchronized_task<detail::when_all_sync>(std::forward<decltype(awaitable)>(awaitable)));
+  return detail::when_all_awaitable(std::move(tasks));
 }
 
 } // namespace mp_coro

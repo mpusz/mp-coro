@@ -44,6 +44,21 @@ void sleep_for(std::chrono::duration<Rep, Period> d)
   std::osyncstream(std::cout) << tid << ": about to return\n";
 }
 
+struct lifetime {
+  const char* txt = "active (default-constructed)";
+
+  lifetime() = default;
+  lifetime(const lifetime&) { txt = "active (copy-constructed)"; }
+  lifetime& operator=(const lifetime&) { txt = "active (copy-assigned)"; return *this; }
+
+  lifetime(lifetime&& other) noexcept { txt = "active (move-constructed)", other.txt = "unspecified (move-constructed-from)"; }
+  lifetime& operator=(lifetime&& other) noexcept { txt = "active (move-assigned)"; other.txt = "unspecified (move-assigned-from)"; return *this; }
+
+  ~lifetime() { txt = "destructed"; }
+
+  void operator()() const { std::cout << "[lifetime] " << txt << '\n'; }
+};
+
 int main()
 {
   using namespace mp_coro;
@@ -51,9 +66,21 @@ int main()
 
   try {
     {
-      awaitable_of<std::tuple<void_type, void_type, void_type>> auto work = when_all(async([]{ sleep_for(1s); }), async([]{ sleep_for(1s); }), async([]{ sleep_for(1s); }));
-      auto result = sync_wait(work);
-      static_assert(std::is_same_v<decltype(result), std::tuple<void_type, void_type, void_type>>);
+      auto func = [obj = lifetime{}]{ obj(); };
+      auto work = when_all(async(func), async(func), async(func));
+      sync_await(work);
+    }
+
+    {
+      auto func = [obj = lifetime{}]{ obj(); };
+      sync_await(when_all(async(func), async(func), async(func)));
+    }
+
+    {
+      auto a1 = async([obj = lifetime{}]{ obj(); });
+      auto a2 = async([obj = lifetime{}]{ obj(); });
+      auto a3 = async([obj = lifetime{}]{ obj(); });
+      sync_await(when_all(std::move(a1), std::move(a2), std::move(a3)));
     }
 
     {
@@ -65,6 +92,21 @@ int main()
     {
       auto [v1, v2, v3, v4] = sync_await(when_all(async([]{ return 5; }), async([]{ return 6; }), async([]{ return 7; }), async([]{ return 8; })));
       std::cout << "v1: " << v1 << ", v2: " << v2 << ", v3: " << v3 << ", v4: " << v4 << '\n';
+    }
+
+    {
+      std::vector<task<void>> v;
+      for(int i=0; i<3; ++i)
+        v.push_back(make_task(async([]{ sleep_for(1s); })));
+      sync_await(when_all(std::move(v)));
+    }
+
+    {
+      std::vector<task<void>> v;
+      for(int i=0; i<3; ++i)
+        v.push_back(make_task(async([]{ sleep_for(1s); })));
+      auto a = when_all(v);
+      sync_await(a);
     }
   }
   catch(const std::exception& ex) {
