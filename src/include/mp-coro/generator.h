@@ -24,6 +24,7 @@
 
 #include <mp-coro/coro_ptr.h>
 #include <mp-coro/trace.h>
+#include <cassert>
 #include <concepts>
 #include <coroutine>
 #include <optional>
@@ -35,8 +36,8 @@ template<typename T>
 class [[nodiscard]] generator {
 public:
   using value_type = std::remove_reference_t<T>;
-  using reference = const value_type&;
-  using pointer = const value_type*;
+  using reference = std::conditional_t<std::is_reference_v<T>, T, const value_type&>;
+  using pointer = std::add_pointer_t<reference>;
 
   class promise_type {
     pointer value_;
@@ -61,43 +62,72 @@ public:
     [[nodiscard]] reference value() const noexcept { TRACE_FUNC(); return *value_; }
   };
 
-  class const_iterator {
+  class iterator {
     std::coroutine_handle<promise_type> handle_;
+    friend generator;
+    explicit iterator(promise_type& promise) noexcept : handle_(std::coroutine_handle<promise_type>::from_promise(promise)) {}
   public:
     using value_type = generator::value_type;
     using difference_type = std::ptrdiff_t;
     
-    const_iterator() = default;
-    explicit const_iterator(promise_type& promise) noexcept : handle_(std::coroutine_handle<promise_type>::from_promise(promise)) {}
+    iterator() = default;  // TODO Remove when gcc is fixed
+    
+    iterator(iterator&& other) noexcept: handle_(std::exchange(other.handle_, {})) {}
+    iterator& operator=(iterator&& other) noexcept
+    {
+      handle_ = std::exchange(other.handle_, {});
+      return *this;
+    }
 
-    const_iterator& operator++()
+    iterator& operator++()
     {
       TRACE_FUNC();
+      assert(!handle_.done() && "Can't increment generator end iterator");
       handle_.resume();
       return *this;
     }
-    void operator++(int) { TRACE_FUNC(); static_cast<void>(operator++()); }
+    void operator++(int) { TRACE_FUNC(); ++*this; }
 
-    [[nodiscard]] reference operator*() const noexcept { TRACE_FUNC(); return handle_.promise().value(); }
-    [[nodiscard]] pointer operator->() const noexcept { TRACE_FUNC(); return std::addressof(operator*()); }
+    [[nodiscard]] reference operator*() const noexcept
+    {
+      TRACE_FUNC();
+      assert(!handle_.done() && "Can't dereference generator end iterator");
+      return handle_.promise().value();
+    }
+    [[nodiscard]] pointer operator->() const noexcept
+    {
+      TRACE_FUNC();
+      return std::addressof(operator*());
+    }
 
-    [[nodiscard]] bool operator==(std::default_sentinel_t) const { TRACE_FUNC(); return !handle_ || handle_.done(); }
+    [[nodiscard]] bool operator==(std::default_sentinel_t) const noexcept
+    {
+      TRACE_FUNC();
+      return
+        !handle_ || // TODO Remove when gcc is fixed (default-construction will not be available and user should not compare with a moved-from iterator)
+        handle_.done();
+    }
   };
-  static_assert(std::input_iterator<const_iterator>);
+  static_assert(std::input_iterator<iterator>);
 
-  using iterator = const_iterator;
+  generator() = default;  // TODO Remove when gcc is fixed
 
-  [[nodiscard]] const_iterator begin()
+  [[nodiscard]] iterator begin()
   {
     TRACE_FUNC();
+    // Pre: Coroutine is suspended at its initial suspend point
+    assert(promise_ && "Can't call begin on moved-from generator");
     auto handle = std::coroutine_handle<promise_type>::from_promise(*promise_);
     handle.resume();
-    return const_iterator(*promise_);
+    return iterator(*promise_);
   }
-  [[nodiscard]] std::default_sentinel_t end() const noexcept { TRACE_FUNC(); return {}; }
+  [[nodiscard]] std::default_sentinel_t end() const noexcept { TRACE_FUNC(); return std::default_sentinel; }
 private:
   promise_ptr<promise_type> promise_;
   generator(promise_type* promise): promise_(promise) {}
 };
 
 } // namespace mp_coro
+
+template<typename T>
+inline constexpr bool std::ranges::enable_view<mp_coro::generator<T>> = true;

@@ -85,6 +85,8 @@ static_assert(awaitable_of<task<void>&&, void>);
 static_assert(!awaitable<generator<int>>);
 static_assert(std::input_iterator<generator<int>::iterator>);
 static_assert(std::ranges::input_range<generator<int>>);
+static_assert(std::ranges::viewable_range<generator<int>>);
+static_assert(std::ranges::view<generator<int>>);
 
 int main()
 {

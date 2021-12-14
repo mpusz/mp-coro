@@ -21,6 +21,7 @@
 // SOFTWARE.
 
 #include <mp-coro/generator.h>
+#include <mp-coro/type_traits.h>
 #include <cstdint>
 #include <iostream>
 #include <ranges>
@@ -31,6 +32,12 @@ mp_coro::generator<int> simple()
 {
   co_yield 1;
   co_yield 2;
+}
+
+mp_coro::generator<std::uint64_t> iota(std::uint64_t start = 0)
+{
+  while(true)
+    co_yield start++;
 }
 
 mp_coro::generator<std::uint64_t> fibonacci()
@@ -56,6 +63,24 @@ mp_coro::generator<int&> ref()
     co_yield i;
 }
 
+template<std::ranges::input_range... Rs, std::size_t... Indices>
+mp_coro::generator<std::tuple<std::ranges::range_reference_t<Rs>...>> zip_impl(std::index_sequence<Indices...>, Rs... ranges)
+{
+  std::tuple<std::ranges::iterator_t<Rs>...> its{std::ranges::begin(ranges)...};
+  std::tuple<std::ranges::sentinel_t<Rs>...> ends{std::ranges::end(ranges)...};
+  auto done = [&]{ return ((std::get<Indices>(its) == std::get<Indices>(ends)) || ...); };
+  while(!done()) {
+    co_yield {*std::get<Indices>(its)...};
+    (++std::get<Indices>(its), ...);
+  }
+}
+
+template<std::ranges::input_range... Rs>
+mp_coro::generator<std::tuple<std::ranges::range_reference_t<Rs>...>> zip(Rs&&... ranges)
+{
+  return zip_impl<Rs...>(std::index_sequence_for<Rs...>{}, std::forward<Rs>(ranges)...);
+}
+
 mp_coro::generator<int> broken()
 {
   co_yield 1;
@@ -70,13 +95,27 @@ int main()
       std::cout << v << ' ';
     std::cout << '\n';
 
-    auto gen = fibonacci();
+    auto gen = iota();
     for(auto i : std::views::counted(gen.begin(), 10))
       std::cout << i << ' ';
     std::cout << '\n';
 
-    gen = fibonacci();
-    for(const auto& i : gen | std::views::take_while([](auto i){ return i < 1000; }))
+    // TODO Uncomment the lines below when gcc is fixed
+    // for(auto i : iota() | std::views::take(10))
+    for(auto i : iota() | std::views::take_while([](auto i){ return i < 10; }))
+      std::cout << i << ' ';
+    std::cout << '\n';
+
+    // auto g = iota();
+    // for(auto i : std::ranges::ref_view(g) | std::views::take(10))
+    //   std::cout << i << ' ';
+    // std::cout << '\n';
+
+    // for(auto i : std::ranges::ref_view(g) | std::views::take(10))
+    //   std::cout << i << ' ';
+    // std::cout << '\n';
+
+    for(const auto& i : fibonacci() | std::views::take_while([](auto i){ return i < 1000; }))
       std::cout << i << ' ';
     std::cout << '\n';
 
@@ -86,6 +125,17 @@ int main()
 
     for(auto& v : ref())
       std::cout << v << ' ';
+    std::cout << '\n';
+
+    int r1[] = {1, 2, 3};
+    int r2[] = {4, 5, 6, 7};
+    for(auto& [v1, v2] : zip(r1, r2))
+      std::cout << "[" << v1 << ", " << v2 << "] ";
+    std::cout << '\n';
+
+    // for(auto& [v1, v2] : zip(iota(), fibonacci()) | std::views::take(10))
+    for(auto& [v1, v2] : zip(iota(), fibonacci()) | std::views::take_while([](const auto& t){ return std::get<0>(t) < 10; }))
+      std::cout << "[" << v1 << ", " << v2 << "] ";
     std::cout << '\n';
 
     for(auto v : broken())
