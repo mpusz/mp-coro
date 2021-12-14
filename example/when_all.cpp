@@ -21,7 +21,7 @@
 // SOFTWARE.
 
 #include <mp-coro/async.h>
-#include <mp-coro/sync_wait.h>
+#include <mp-coro/sync_await.h>
 #include <mp-coro/when_all.h>
 #include <mp-coro/task.h>
 #include <iostream>
@@ -58,12 +58,12 @@ int main()
 
     {
       auto work = when_all(async([]{ return 1; }), async([]{ return 2; }), async([]{ return 3; }), async([]{ return 4; }));
-      auto [v1, v2, v3, v4] = mp_coro::sync_wait(work);
+      auto [v1, v2, v3, v4] = sync_await(work);
       std::cout << "v1: " << v1 << ", v2: " << v2 << ", v3: " << v3 << ", v4: " << v4 << '\n';
     }
 
     {
-      auto [v1, v2, v3, v4] = mp_coro::sync_wait(when_all(async([]{ return 5; }), async([]{ return 6; }), async([]{ return 7; }), async([]{ return 8; })));
+      auto [v1, v2, v3, v4] = sync_await(when_all(async([]{ return 5; }), async([]{ return 6; }), async([]{ return 7; }), async([]{ return 8; })));
       std::cout << "v1: " << v1 << ", v2: " << v2 << ", v3: " << v3 << ", v4: " << v4 << '\n';
     }
   }

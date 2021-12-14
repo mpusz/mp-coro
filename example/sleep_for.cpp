@@ -20,7 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#include <mp-coro/sync_wait.h>
+#include <mp-coro/sync_await.h>
 #include <mp-coro/task.h>
 #include <mp-coro/type_traits.h>
 #include <chrono>
@@ -50,7 +50,7 @@ mp_coro::task<> sleepy()
 int main()
 {
   try {
-    mp_coro::sync_wait(sleepy());
+    mp_coro::sync_await(sleepy());
   }
   catch(const std::exception& ex) {
     std::cout << "Unhandled exception: " << ex.what() << '\n';

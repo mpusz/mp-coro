@@ -22,7 +22,7 @@
 
 #include <mp-coro/async.h>
 #include <mp-coro/task.h>
-#include <mp-coro/sync_wait.h>
+#include <mp-coro/sync_await.h>
 #include <concepts>
 #include <iostream>
 #include <optional>
@@ -64,9 +64,9 @@ void test(mp_coro::task<T> t)
 {
   try {
     if constexpr(std::is_void_v<T>)
-      sync_wait(t);
+      sync_await(t);
     else
-      std::cout << "Result: " << sync_wait(t) << '\n';
+      std::cout << "Result: " << sync_await(t) << '\n';
   }
   catch(const std::exception& ex) {
     std::cout << "Exception caught: " << ex.what() << "\n";

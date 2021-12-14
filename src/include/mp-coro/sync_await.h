@@ -30,7 +30,7 @@
 namespace mp_coro {
 
 template<awaitable A>
-[[nodiscard]] decltype(auto) sync_wait(A&& awaitable)
+[[nodiscard]] decltype(auto) sync_await(A&& awaitable)
 {
   struct sync {
     std::binary_semaphore sem{0};

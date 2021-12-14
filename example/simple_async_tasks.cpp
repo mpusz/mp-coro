@@ -21,13 +21,10 @@
 // SOFTWARE.
 
 #include <mp-coro/task.h>
-#include <mp-coro/sync_wait.h>
+#include <mp-coro/sync_await.h>
 #include <iostream>
-#include <syncstream>
 #include <chrono>
 #include <thread>
-
-std::jthread worker;
 
 mp_coro::task<int> async_foo()
 {
@@ -43,7 +40,7 @@ mp_coro::task<int> async_foo()
         handle.resume();
       };
       TRACE_FUNC();
-      worker = std::jthread(work);  // TODO: Fix that (replace with a thread pool)
+      std::jthread(work).detach();  // TODO: Fix that (replace with a thread pool)
     }
     int await_resume() noexcept { TRACE_FUNC(); return result; }
   };
@@ -60,7 +57,7 @@ mp_coro::task<long> bar()
 int main()
 {
   try {
-    std::cout << sync_wait(bar()) << "\n";
+    std::cout << sync_await(bar()) << "\n";
   }
   catch(const std::exception& ex) {
     std::cout << "Unhandled exception caught: " << ex.what() << "\n";

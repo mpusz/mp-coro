@@ -20,7 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#include <mp-coro/sync_wait.h>
+#include <mp-coro/sync_await.h>
 #include <mp-coro/task.h>
 #include <iostream>
 
@@ -71,11 +71,11 @@ int main()
 {
   try {
     auto task = bar();
-    std::cout << "i = " << sync_wait(task) << '\n';
-    sync_wait(baz());
-    sync_wait(empty());
-    std::cout << sync_wait(ref()) << '\n';
-    sync_wait(multiple_await());
+    std::cout << "i = " << sync_await(task) << '\n';
+    sync_await(baz());
+    sync_await(empty());
+    std::cout << sync_await(ref()) << '\n';
+    sync_await(multiple_await());
   }
   catch(const std::exception& ex) {
     std::cout << "Unhandled exception: " << ex.what() << '\n';

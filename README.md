@@ -39,7 +39,7 @@ The design of this library is heavily influenced by:
   - `synchronized_task<Sync, T>` class template
     - task coroutine return type for handling non-standard (coroutine-like) synchronization
     - takes a synchronization primitive as the first template parameter
-    - used in `sync_wait` and `when_all`
+    - used in `sync_await` and `when_all`
   - `storage<T>` class template
     - responsible for storage of the result or the current exception
     - implementation uses `std::variant` under the hood
@@ -87,7 +87,7 @@ static_assert(awaitable_of<const task<void>&, void>);
 static_assert(awaitable_of<task<void>&&, void>);
 ```
 
-### `sync_wait()`
+### `sync_await()`
 
 - Uses `std::binary_semaphore` for synchronization
 - Much cleaner and shorter design

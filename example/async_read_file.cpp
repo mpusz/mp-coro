@@ -21,7 +21,7 @@
 // SOFTWARE.
 
 #include <mp-coro/task.h>
-#include <mp-coro/sync_wait.h>
+#include <mp-coro/sync_await.h>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
@@ -73,7 +73,7 @@ mp_coro::task<std::string::size_type> async_read_file(const std::filesystem::pat
 void f1(const std::filesystem::path& path)
 {
   auto t = async_read_file(path);
-  std::osyncstream(std::cout) << "Result: " << sync_wait(t) << '\n';
+  std::osyncstream(std::cout) << "Result: " << sync_await(t) << '\n';
 }
 
 mp_coro::task<> f2(const std::filesystem::path& path)
@@ -87,7 +87,7 @@ int main()
   try {
     auto path = "/etc/passwd";
     f1(path);
-    sync_wait(f2(path));
+    sync_await(f2(path));
   }
   catch(const std::exception& ex) {
     std::osyncstream(std::cout) << "Unhandled exception: " << ex.what() << '\n';

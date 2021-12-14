@@ -47,7 +47,7 @@ add_library(mp-coro INTERFACE
     include/mp-coro/concepts.h
     include/mp-coro/coro_ptr.h
     include/mp-coro/generator.h
-    include/mp-coro/sync_wait.h
+    include/mp-coro/sync_await.h
     include/mp-coro/task.h
     include/mp-coro/trace.h
     include/mp-coro/type_traits.h
