@@ -210,3 +210,5 @@ static_assert(!awaitable<const async<int(*)()>&>);
 ### `TRACE_FUNC()`
 
 A macro used across the library to facilitate debugging and learning of coroutines workflow.
+Tracing level can be selected with `MP_CORO_TRACE_LEVEL` preprocessor define and CMake cache
+variable.

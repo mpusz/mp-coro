@@ -22,21 +22,13 @@
 
 #pragma once
 
-#ifndef CORO_TRACE
-#ifndef NDEBUG
-#define CORO_TRACE 2
-#endif
-#endif
+#ifdef MP_CORO_TRACE_LEVEL
 
-#if CORO_TRACE == 0
-
-namespace mp_coro {
+#if MP_CORO_TRACE_LEVEL == 0
 
 #define TRACE_FUNC()
 
-} // namespace mp_coro
-
-#else // CORO_TRACE == 0
+#else // MP_CORO_TRACE_LEVEL == 0
 
 #include <iostream>
 #include <source_location>
@@ -57,7 +49,7 @@ struct location {
 
 }
 
-#if CORO_TRACE == 1
+#if MP_CORO_TRACE_LEVEL == 1
 
 void trace_func(std::source_location loc = std::source_location::current())
 {
@@ -66,7 +58,7 @@ void trace_func(std::source_location loc = std::source_location::current())
 
 #define TRACE_FUNC() ::mp_coro::trace_func()
 
-#elif CORO_TRACE == 2
+#elif MP_CORO_TRACE_LEVEL == 2
 
 namespace detail {
 
@@ -88,8 +80,10 @@ detail::trace_on_finish trace_func(std::source_location loc = std::source_locati
 
 #define TRACE_FUNC() auto _ = ::mp_coro::trace_func()
 
-#endif /* CORO_TRACE == 2 */
+#endif /* MP_CORO_TRACE_LEVEL == 2 */
 
 } // namespace mp_coro
 
-#endif // CORO_TRACE == 0
+#endif // MP_CORO_TRACE_LEVEL == 0
+
+#endif // MP_CORO_TRACE_LEVEL

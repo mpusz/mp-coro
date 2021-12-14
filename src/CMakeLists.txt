@@ -28,6 +28,9 @@ project(mp-coro
 
 set(projectPrefix MP_CORO_)
 
+set(${projectPrefix}TRACE_LEVEL OFF CACHE STRING "Select downcasting mode")
+set_property(CACHE ${projectPrefix}TRACE_LEVEL PROPERTY STRINGS OFF ON_ENTER ON_ENTER_AND_EXIT)
+
 option(${projectPrefix}AS_SYSTEM_HEADERS "Exports library as system headers" OFF)
 message(STATUS "${projectPrefix}AS_SYSTEM_HEADERS: ${${projectPrefix}AS_SYSTEM_HEADERS}")
 
@@ -72,4 +75,13 @@ install(FILES mp-coroConfig.cmake ${CMAKE_CURRENT_BINARY_DIR}/mp-coroConfigVersi
     DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/mp-coro
 )
 
-target_compile_options(mp-coro INTERFACE -fconcepts-diagnostics-depth=3)
+if(DEFINED ${projectPrefix}TRACE_LEVEL)
+    set(trace_level_options OFF ON_ENTER ON_ENTER_AND_EXIT)
+    list(FIND trace_level_options "${${projectPrefix}TRACE_LEVEL}" trace_level)
+    if(trace_level EQUAL -1)
+        message(FATAL_ERROR "'${projectPrefix}TRACE_LEVEL' should be one of ${trace_level_options} ('${${projectPrefix}TRACE_LEVEL}' received)")
+    else()
+        message(STATUS "${projectPrefix}TRACE_LEVEL: ${${projectPrefix}TRACE_LEVEL}")
+        target_compile_definitions(mp-coro INTERFACE ${projectPrefix}TRACE_LEVEL=${trace_level})
+    endif()
+endif()
