@@ -30,7 +30,7 @@
 
 namespace mp_coro::detail {
 
-template<typename Sync, task_result T>
+template<typename Sync, task_value_type T>
   requires requires(Sync s) { s.notify_awaitable_completed(); }
 class [[nodiscard]] synchronized_task {
 public:

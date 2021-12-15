@@ -32,7 +32,7 @@
 
 namespace mp_coro {
 
-template<task_result T = void>
+template<task_value_type T = void, typename Allocator = void>
 class [[nodiscard]] task {
 public:
   using value_type = T;

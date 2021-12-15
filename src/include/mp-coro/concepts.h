@@ -85,6 +85,6 @@ concept awaitable_of = awaitable<T> && requires(T&& t) {
 };
 
 template<typename T>
-concept task_result = std::move_constructible<T> || std::is_reference_v<T> || std::is_void_v<T>;
+concept task_value_type = std::move_constructible<T> || std::is_reference_v<T> || std::is_void_v<T>;
 
 } // namespace mp_coro
