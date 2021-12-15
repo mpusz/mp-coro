@@ -22,13 +22,11 @@
 
 #pragma once
 
-#ifdef MP_CORO_TRACE_LEVEL
-
-#if MP_CORO_TRACE_LEVEL == 0
+#if !defined(MP_CORO_TRACE_LEVEL) || MP_CORO_TRACE_LEVEL == 0
 
 #define TRACE_FUNC()
 
-#else // MP_CORO_TRACE_LEVEL == 0
+#else // !defined(MP_CORO_TRACE_LEVEL) || MP_CORO_TRACE_LEVEL == 0
 
 #include <iostream>
 #include <source_location>
@@ -84,6 +82,4 @@ detail::trace_on_finish trace_func(std::source_location loc = std::source_locati
 
 } // namespace mp_coro
 
-#endif // MP_CORO_TRACE_LEVEL == 0
-
-#endif // MP_CORO_TRACE_LEVEL
+#endif // !defined(MP_CORO_TRACE_LEVEL) || MP_CORO_TRACE_LEVEL == 0
