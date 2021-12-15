@@ -38,11 +38,11 @@ template<awaitable A>
   };
 
   TRACE_FUNC();
+  auto sync_task = detail::make_synchronized_task<sync>(std::forward<A>(awaitable));
   sync work_done;
-  auto task = detail::make_synchronized_task<sync>(std::forward<A>(awaitable));
-  task.start(work_done);
+  sync_task.start(work_done);
   work_done.sem.acquire();
-  return task.get();
+  return sync_task.get();
 }
 
 } // namespace mp_coro

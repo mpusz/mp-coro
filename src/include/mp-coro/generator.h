@@ -29,6 +29,7 @@
 #include <coroutine>
 #include <optional>
 #include <ranges>
+#include <utility>
 
 namespace mp_coro {
 
@@ -46,7 +47,7 @@ public:
     static std::suspend_always final_suspend() noexcept { TRACE_FUNC(); return {}; }
     static void return_void() noexcept { TRACE_FUNC(); }
 
-    generator<T> get_return_object() noexcept { TRACE_FUNC(); return this; }
+    generator get_return_object() noexcept { TRACE_FUNC(); return this; }
     std::suspend_always yield_value(reference value) noexcept
     {
       TRACE_FUNC();
@@ -65,7 +66,7 @@ public:
   class iterator {
     std::coroutine_handle<promise_type> handle_;
     friend generator;
-    explicit iterator(promise_type& promise) noexcept : handle_(std::coroutine_handle<promise_type>::from_promise(promise)) {}
+    explicit iterator(std::coroutine_handle<promise_type> h) noexcept : handle_(h) {}
   public:
     using value_type = generator::value_type;
     using difference_type = std::ptrdiff_t;
@@ -119,7 +120,7 @@ public:
     assert(promise_ && "Can't call begin on moved-from generator");
     auto handle = std::coroutine_handle<promise_type>::from_promise(*promise_);
     handle.resume();
-    return iterator(*promise_);
+    return iterator(handle);
   }
   [[nodiscard]] std::default_sentinel_t end() const noexcept { TRACE_FUNC(); return std::default_sentinel; }
 private:

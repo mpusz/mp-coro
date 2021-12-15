@@ -59,7 +59,7 @@ public:
       return final_awaiter{};
     }
 
-    task<T> get_return_object() noexcept
+    task get_return_object() noexcept
     {
       TRACE_FUNC();
       return this;
@@ -98,13 +98,6 @@ public:
   }
 
 private:
-  promise_ptr<promise_type> promise_;
-
-  task(promise_type* promise): promise_(promise)
-  {
-    TRACE_FUNC();
-  }
-
   struct awaiter {
     promise_type& promise;
 
@@ -124,9 +117,16 @@ private:
     decltype(auto) await_resume() const
     {
       TRACE_FUNC();
-      return this->promise.get();
+      return promise.get();
     }
   };
+  
+  promise_ptr<promise_type> promise_;
+
+  task(promise_type* promise): promise_(promise)
+  {
+    TRACE_FUNC();
+  }
 };
 
 template<awaitable A>

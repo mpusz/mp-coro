@@ -58,7 +58,7 @@ public:
       return final_awaiter{};
     }
 
-    synchronized_task<Sync, T> get_return_object() noexcept
+    synchronized_task get_return_object() noexcept
     {
       TRACE_FUNC();
       return this;
@@ -109,6 +109,7 @@ private:
 };
 
 template<typename Sync, awaitable A>
+  requires requires(Sync s) { s.notify_awaitable_completed(); }
 synchronized_task<Sync, remove_rvalue_reference_t<await_result_t<A>>> make_synchronized_task(A&& awaitable)
 { 
   TRACE_FUNC();

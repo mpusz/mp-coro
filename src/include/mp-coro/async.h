@@ -43,7 +43,6 @@ public:
   {
     struct awaiter {
       async& awaitable;
-
       bool await_ready() const noexcept { TRACE_FUNC(); return false; }
       void await_suspend(std::coroutine_handle<> handle)
       {
