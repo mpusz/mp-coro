@@ -23,6 +23,7 @@
 #pragma once
 
 #include <mp-coro/coro_ptr.h>
+#include <mp-coro/bits/noncopyable.h>
 #include <mp-coro/trace.h>
 #include <cassert>
 #include <concepts>
@@ -40,7 +41,7 @@ public:
   using reference = std::conditional_t<std::is_reference_v<T>, T, const value_type&>;
   using pointer = std::add_pointer_t<reference>;
 
-  class promise_type {
+  class promise_type : detail::noncopyable {
     pointer value_;
   public:
     static std::suspend_always initial_suspend() noexcept { TRACE_FUNC(); return {}; }

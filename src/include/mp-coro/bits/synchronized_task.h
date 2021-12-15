@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include <mp-coro/bits/noncopyable.h>
 #include <mp-coro/bits/task_promise_storage.h>
 #include <mp-coro/coro_ptr.h>
 #include <mp-coro/trace.h>
@@ -36,7 +37,7 @@ class [[nodiscard]] synchronized_task {
 public:
   using value_type = T;
   
-  struct promise_type : task_promise_storage<T> {
+  struct promise_type : private detail::noncopyable, task_promise_storage<T> {
     Sync* sync = nullptr;
 
     static std::suspend_always initial_suspend() noexcept
