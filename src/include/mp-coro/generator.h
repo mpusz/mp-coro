@@ -41,27 +41,24 @@ public:
   using reference = std::conditional_t<std::is_reference_v<T>, T, const value_type&>;
   using pointer = std::add_pointer_t<reference>;
 
-  class promise_type : detail::noncopyable {
-    pointer value_;
-  public:
+  struct promise_type : private detail::noncopyable {
+    pointer value;
+
     static std::suspend_always initial_suspend() noexcept { TRACE_FUNC(); return {}; }
     static std::suspend_always final_suspend() noexcept { TRACE_FUNC(); return {}; }
     static void return_void() noexcept { TRACE_FUNC(); }
 
     generator get_return_object() noexcept { TRACE_FUNC(); return this; }
-    std::suspend_always yield_value(reference value) noexcept
+    std::suspend_always yield_value(reference v) noexcept
     {
       TRACE_FUNC();
-      value_ = std::addressof(value);
+      value = std::addressof(v);
       return {};
     }
     void unhandled_exception() { TRACE_FUNC(); throw; }
     
     // disallow co_await in generator coroutines
     void await_transform() = delete;
-    
-    // custom functions
-    [[nodiscard]] reference value() const noexcept { TRACE_FUNC(); return *value_; }
   };
 
   class iterator {
@@ -94,7 +91,7 @@ public:
     {
       TRACE_FUNC();
       assert(!handle_.done() && "Can't dereference generator end iterator");
-      return handle_.promise().value();
+      return *handle_.promise().value;
     }
     [[nodiscard]] pointer operator->() const noexcept
     {
