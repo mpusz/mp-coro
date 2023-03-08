@@ -22,17 +22,16 @@
 
 #pragma once
 
-#include <mp-coro/bits/nonvoid_storage.h>
+#include <mp-coro/bits/storage.h>
 #include <mp-coro/trace.h>
 #include <concepts>
 
 namespace mp_coro::detail {
 
 template<typename T>
-struct task_promise_storage_base : nonvoid_storage<T> {
-  void unhandled_exception()
-    noexcept(noexcept(this->set_exception(std::current_exception())))
-  { 
+struct task_promise_storage_base : storage<T> {
+  void unhandled_exception() noexcept(noexcept(this->set_exception(std::current_exception())))
+  {
     TRACE_FUNC();
     this->set_exception(std::current_exception());
   }

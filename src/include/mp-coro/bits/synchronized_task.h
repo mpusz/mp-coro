@@ -88,18 +88,6 @@ public:
     return std::move(*promise_).get();
   }
 
-  [[nodiscard]] decltype(auto) nonvoid_get() const &
-  {
-    TRACE_FUNC();
-    return promise_->nonvoid_get();
-  }
-
-  [[nodiscard]] decltype(auto) nonvoid_get() const &&
-  {
-    TRACE_FUNC();
-    return std::move(*promise_).nonvoid_get();
-  }
-
 private:
   promise_ptr<promise_type> promise_;
 
