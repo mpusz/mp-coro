@@ -115,8 +115,8 @@ decltype(auto) make_all_results(T&& container)
         (..., tasks.get());
       }
       else {
-        using ret_type = std::tuple<remove_rvalue_reference_t<decltype(std::forward<Tasks>(tasks).nonvoid_get())>...>;
-        return ret_type(std::forward<Tasks>(tasks).nonvoid_get()...);
+        using ret_type = std::tuple<remove_rvalue_reference_t<decltype(std::forward<Tasks>(tasks).get())>...>;
+        return ret_type(std::forward<Tasks>(tasks).get()...);
       }
     }, std::forward<T>(container));
   }
