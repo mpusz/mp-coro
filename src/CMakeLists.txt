@@ -51,6 +51,7 @@ add_library(mp-coro INTERFACE
     include/mp-coro/task.h
     include/mp-coro/trace.h
     include/mp-coro/type_traits.h
+    include/mp-coro/cancellation.h
 )
 target_compile_features(mp-coro INTERFACE cxx_std_20)
 target_include_directories(mp-coro ${coroAsSystem} INTERFACE
