@@ -6,7 +6,11 @@
 #include <type_traits>
 #include <utility>
 
-namespace mp_coro::detail {
+namespace mp_coro {
+// forward declaration of cancellation_registration
+struct cancellation_registration;
+
+namespace detail {
 class [[nodiscard]] cancellation_state : noncopyable {
 public:
   static cancellation_state* make_cancellation_state() { return new cancellation_state(); };
@@ -48,6 +52,8 @@ public:
   {
     return state_.load(std::memory_order_acquire) & cancellation_requested_flag;
   }
+
+  [[nodiscard]] bool try_register_callback([[maybe_unused]] cancellation_registration* cancellation_registration) { return false; }
 
 private:
   ~cancellation_state() = default;
@@ -149,11 +155,13 @@ struct source_cancellation_state_ptr final : cancellation_state_ptr_base<source_
   void dec_ref() { state_->dec_token_ref(); }
 };
 
-}  // namespace mp_coro::detail
+}  // namespace detail
+}  // namespace mp_coro
+
 
 // TODO when callback registration is implemented:
+// - `try_register_callback` must be implemented.
 // - `request_cancellation` should invoke callbacks.
 // - `can_be_cancelled` can also return true if registered_callbacks_count > 0.
 // - `cancellation_notification_complete_flag` also indicates that all callbacks have been called.
-// - `cancellation_tokens_rc_pos` also counts the number of registered callbacks.
 // - `~cancellation_state` should free resources kept to hold registered callbacks

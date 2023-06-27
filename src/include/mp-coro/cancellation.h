@@ -9,15 +9,18 @@
 
 namespace mp_coro {
 
+
 struct operation_cancelled : std::exception {
   operation_cancelled() {}
   const char* what() const noexcept override { return "Operation cancelled"; }
 };
 
-class cancellation_token {
-public:
-  cancellation_token(detail::cancellation_state* s) : state_{s} {}
 
+namespace detail {
+
+template<typename CancellationStateSmartPtr>
+class cancellation_common_base {
+public:
   [[nodiscard]] bool can_be_cancelled() const noexcept { return state_.get() != nullptr && state_->can_be_cancelled(); }
 
   [[nodiscard]] bool is_cancellation_requested() const noexcept
@@ -25,28 +28,28 @@ public:
     return state_.get() != nullptr && state_->is_cancellation_requested();
   }
 
-  // operations specific to cancellation_token
+protected:
+  cancellation_common_base(cancellation_state* s) : state_{s} {};
+  CancellationStateSmartPtr state_;
+};
+
+}  // namespace detail
+
+
+struct cancellation_token final : detail::cancellation_common_base<detail::token_cancellation_state_ptr> {
+  cancellation_token(detail::cancellation_state* s) : cancellation_common_base{s} {}
 
   void throw_if_cancellation_requested()
   {
     if (state_.get() != nullptr && is_cancellation_requested()) throw operation_cancelled{};
   }
-private:
-  detail::token_cancellation_state_ptr state_;
+
+  friend struct cancellation_registration;
 };
 
-class cancellation_source {
-public:
-  cancellation_source() : state_{detail::cancellation_state::make_cancellation_state()} {}
 
-  [[nodiscard]] bool can_be_cancelled() const noexcept { return state_.get() != nullptr && state_->can_be_cancelled(); }
-
-  [[nodiscard]] bool is_cancellation_requested() const noexcept
-  {
-    return state_.get() != nullptr && state_->is_cancellation_requested();
-  };
-
-  // operations specific to cancellation_source
+struct cancellation_source final : detail::cancellation_common_base<detail::source_cancellation_state_ptr> {
+  cancellation_source() : cancellation_common_base{detail::cancellation_state::make_cancellation_state()} {}
 
   void request_cancellation()
   {
@@ -54,17 +57,24 @@ public:
   }
 
   cancellation_token token() const noexcept { return cancellation_token(state_.get()); }
+};
+
+
+struct cancellation_registration final : detail::noncopyable {
+  template<typename Callback>
+    requires std::constructible_from<Callback, std::function<void(void)>>
+  cancellation_registration(cancellation_token token, Callback&& cb) : callback_{std::forward<Callback>(cb)}
+  {  // taking token by value increases token_ref
+    state_ = std::move(token.state_);
+    if (state_.get() != nullptr && state_->can_be_cancelled() && !state_->try_register_callback(this)) {
+      state_.reset(nullptr);  // cb failed to be registered, decrease token_ref
+      callback_();
+    }
+  }
 
 private:
-  detail::source_cancellation_state_ptr state_;
+  std::function<void(void)> callback_;
+  detail::token_cancellation_state_ptr state_;
 };
 
 }  // namespace mp_coro
-
-// TODO
-// - factor out common parts of `cancellation_token` and `cancellation_source` into `cancellation_base`.
-//   - main problem: do not virtualize the destructor.
-//   - lesser problem: constructors also differ.
-//   - idea: in lisp this could be a macro generating the class when given the customized function.
-//     But inheritance isn't quite like that so probably don't CRTP (and C macros are error-prone).
-// - should implementations be moved to a .cpp file?
