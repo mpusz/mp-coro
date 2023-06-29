@@ -9,7 +9,6 @@
 
 namespace mp_coro {
 
-
 struct operation_cancelled : std::exception {
   operation_cancelled() {}
   const char* what() const noexcept override { return "Operation cancelled"; }
@@ -73,6 +72,11 @@ struct cancellation_registration final : detail::noncopyable {
   }
 
 private:
+  template<std::int64_t>
+  friend struct detail::cancellation_registry;
+  friend class detail::cancellation_state;
+
+  std::int64_t bin_idx;
   std::function<void(void)> callback_;
   detail::token_cancellation_state_ptr state_;
 };

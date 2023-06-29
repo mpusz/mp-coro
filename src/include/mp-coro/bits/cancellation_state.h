@@ -1,5 +1,6 @@
 #pragma once
 
+#include <mp-coro/bits/cancellation_registry.h>
 #include <mp-coro/bits/noncopyable.h>
 #include <atomic>
 #include <cstdint>
@@ -8,32 +9,18 @@
 
 namespace mp_coro {
 
-// Forward declaration of cancellation_registration.
-struct cancellation_registration;
-
 namespace detail {
 class [[nodiscard]] cancellation_state : noncopyable {
 public:
   static cancellation_state* make_cancellation_state() { return new cancellation_state(); };
 
-  void add_source_ref() { add_ref(cancellation_source_rc_pos); }
-
-  void dec_source_ref() { dec_ref(cancellation_source_rc_pos); }
-
-  void add_token_ref() { add_ref(cancellation_token_rc_pos); }
-
-  void dec_token_ref() { dec_ref(cancellation_token_rc_pos); }
-
-
-  bool request_cancellation() noexcept
-  {  // Returns previous values of cancellation_requested.
-    auto old_state = state_.fetch_or(cancellation_requested_flag);
-    if (old_state & cancellation_requested_flag) return true;  // if cancellation is already requested
-    // otherwise, we are the first to request cancellation
-    state_.fetch_add(cancellation_notification_complete_flag, std::memory_order_release);
+  // Register `cancellation_registration` if cancellation has not already been requested.
+  [[nodiscard]] bool try_register_callback(cancellation_registration* x)
+  {
+    if (is_cancellation_requested()) return false;
+    registry_.force_register(x);
     return false;
-  };
-
+  }
 
   [[nodiscard]] bool can_be_cancelled() const noexcept
   {
@@ -46,12 +33,16 @@ public:
     return state_.load(std::memory_order_acquire) & cancellation_requested_flag;
   }
 
-  [[nodiscard]] bool try_register_callback([[maybe_unused]] cancellation_registration* cancellation_registration)
-  {
-    if (is_cancellation_requested()) return false;
-    // TODO: implement this using cancellation_register
-    return false;
-  }
+  // Returns previous values of cancellation_requested.
+  bool request_cancellation() noexcept;
+
+  void add_source_ref() { add_ref(cancellation_source_rc_pos); }
+
+  void dec_source_ref() { dec_ref(cancellation_source_rc_pos); }
+
+  void add_token_ref() { add_ref(cancellation_token_rc_pos); }
+
+  void dec_token_ref() { dec_ref(cancellation_token_rc_pos); }
 
 private:
   ~cancellation_state() = default;
@@ -70,8 +61,11 @@ private:
     state_.fetch_add(cancellation_rc_pos, std::memory_order_relaxed);
   }
 
+  void call_registrations();
+
   // Initialized with source reference count set to 1.
   std::atomic<std::uint64_t> state_ = cancellation_source_rc_pos;
+  cancellation_registry<> registry_;
 
   // State and its default initialized value is a bit packed version of the following struct:
   // struct {

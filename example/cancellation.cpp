@@ -6,7 +6,6 @@
 #include <thread>
 
 mp_coro::task<int> to_be_cancelled(mp_coro::cancellation_token c_token) {
-  using namespace std::chrono_literals;
   c_token.throw_if_cancellation_requested();
   co_return 0;
 }
