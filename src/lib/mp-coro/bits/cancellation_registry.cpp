@@ -1,13 +1,16 @@
 #include <mp-coro/bits/cancellation_registry.h>
 #include <mp-coro/bits/constant_backoff.h>
 #include <mp-coro/cancellation.h>
+
 #include <cstdint>
+#include <bit>
+#include <thread>
 
 namespace {
 
-static constexpr auto n_bins = mp_coro::detail::cancellation_registry<>::n_bins;
-static constexpr auto inhabited_flags_begin = mp_coro::detail::cancellation_registry<>::inhabited_flags_begin;
-static constexpr auto availability_mask = mp_coro::detail::cancellation_registry<>::availability_mask;
+constexpr auto n_bins = mp_coro::detail::cancellation_registry::n_bins;
+constexpr auto inhabited_flags_begin = mp_coro::detail::cancellation_registry::inhabited_flags_begin;
+constexpr auto availability_mask = mp_coro::detail::cancellation_registry::availability_mask;
 
 // ==== operations to query availability_flags_ ====
 
@@ -22,39 +25,29 @@ std::uint64_t inhabited_and_available(std::uint64_t availability_flags)
 
 // ==== operations to find availability or inhabit state of a specific bit ====
 
-std::int64_t first_inhabited_and_available(std::uint64_t availability_flags)
+std::size_t first_inhabited_and_available(std::uint64_t availability_flags)
 {
-  return std::countr_zero(inhabited_and_available(availability_flags));
+  return static_cast<std::size_t>(std::countr_zero(inhabited_and_available(availability_flags)));
 }
 
-std::int64_t first_available(std::uint64_t availability_flags)
-{
-  return std::countr_zero(availability(availability_flags));
-}
+std::uint64_t availability_mask_from_idx(std::size_t idx) { return UINT64_C(1) << idx; }
 
-std::int64_t first_inhabited(std::uint64_t availability_flags)
-{
-  return std::countr_zero(inhabiting(availability_flags));
-}
+std::uint64_t inhabit_mask_from_idx(std::size_t idx) { return inhabited_flags_begin << idx; }
 
-std::uint64_t availability_mask_from_idx(std::int64_t idx) { return UINT64_C(1) << idx; }
-
-std::uint64_t inhabit_mask_from_idx(std::int64_t idx) { return inhabited_flags_begin << idx; }
-
-bool is_bin_available(std::uint64_t availability_flags, std::int64_t idx)
+bool is_bin_available(std::uint64_t availability_flags, std::size_t idx)
 {
   return (availability(availability_flags) & availability_mask_from_idx(idx)) > 0;
 }
 
-std::int64_t query_availability_from_idx(std::uint64_t availability_flags, std::int64_t idx)
+std::size_t query_availability_from_idx(std::uint64_t availability_flags, std::size_t idx)
 {  // Probe all bins for availability (starting from idx). If no available bin is found, return whatever index is left
    // at idx after exiting the probing loop.
-  for (std::int64_t attempts = 0; attempts < n_bins && !is_bin_available(availability_flags, idx); ++attempts)
+  for (std::size_t attempts = 0; attempts < n_bins && !is_bin_available(availability_flags, idx); ++attempts)
     idx = (idx + attempts) % n_bins;
   return idx;
 }
 
-std::int64_t thread_randomized_bin_idx()
+std::size_t thread_randomized_bin_idx()
 {
   // Randomize index of bin to be used (reduce contention)
   return std::hash<std::thread::id>{}(std::this_thread::get_id()) % n_bins;
@@ -65,19 +58,17 @@ std::int64_t thread_randomized_bin_idx()
 
 namespace mp_coro::detail {
 
-template<std::int64_t max_bin_size>
-bool cancellation_registry<max_bin_size>::empty() const
+bool cancellation_registry::empty() const
 {
   return inhabiting(availability_flags_.load(std::memory_order_acquire)) == 0;
 }
 
-template<std::int64_t max_bin_size>
-std::optional<cancellation_registration*> cancellation_registry<max_bin_size>::try_deregister_one()
+std::optional<cancellation_registration*> cancellation_registry::try_deregister_one()
 {  // Variables used in the CAS loop:
   // - Index of the bin to be used - initially an invalid index.
   // - Use flag_op to operate with availability_flags.
   // - Do standard procedure of CAS loop with old and new copy.
-  std::int64_t idx = n_bins;
+  std::size_t idx = n_bins;
   std::uint64_t old_availability_flags = availability_flags_.load(std::memory_order_acquire);
   std::uint64_t new_availability_flags;
   std::uint64_t flag_op;
@@ -110,10 +101,9 @@ std::optional<cancellation_registration*> cancellation_registry<max_bin_size>::t
   return ret;
 }
 
-template<std::int64_t max_bin_size>
-void cancellation_registry<max_bin_size>::deregister(cancellation_registration* x)
+void cancellation_registry::deregister(cancellation_registration* x)
 {
-  std::int64_t idx = x->bin_idx;
+  std::size_t idx = x->bin_idx;
   std::uint64_t idx_mask = availability_mask_from_idx(idx);
   constant_backoff backoff{};
   auto do_cas = [&]() -> bool {  // Return true if CAS and exclusivity of bins_[idx] is achieved, false otherwise.
@@ -138,26 +128,23 @@ void cancellation_registry<max_bin_size>::deregister(cancellation_registration* 
   availability_flags_.fetch_xor(idx_mask, std::memory_order_release);
 };
 
-template<std::int64_t max_bin_size>
-void cancellation_registry<max_bin_size>::force_register(cancellation_registration* x)
+void cancellation_registry::force_register(cancellation_registration* x)
 {  // Change the starting bin index between attempts.
 
   // NOTE 1: Maybe there is a better operation than just increasing idx by one on faliure.
   // NOTE 2: Some backoff can be implemented in here. I've tried constant backoff and it performs poorly when the
   // number of threads is low (and it doesn't seem to be worth it for larger number of threads - I've tested up to
   // 1024 threads -).
-  std::int64_t idx = thread_randomized_bin_idx();
+  std::size_t idx = thread_randomized_bin_idx();
   while (!try_register_from_idx(x, idx)) idx = (idx + 1) % n_bins;
 }
 
-template<std::int64_t max_bin_size>
-bool cancellation_registry<max_bin_size>::try_register(cancellation_registration* x)
+bool cancellation_registry::try_register(cancellation_registration* x)
 {
   return try_register_from_idx(x, thread_randomized_bin_idx());
 }
 
-template<std::int64_t max_bin_size>
-bool cancellation_registry<max_bin_size>::try_register_from_idx(cancellation_registration* x, std::int64_t idx)
+bool cancellation_registry::try_register_from_idx(cancellation_registration* x, std::size_t idx)
 {  // Variables used in the CAS loop:
   // - Use flag_op to operate with availability_flags.
   // - Do standard procedure of CAS loop with old and new copy.

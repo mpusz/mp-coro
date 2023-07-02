@@ -2,6 +2,7 @@
 
 #include <mp-coro/bits/cancellation_state.h>
 #include <mp-coro/bits/noncopyable.h>
+#include <cstdint>
 #include <concepts>
 #include <functional>
 #include <memory>
@@ -72,11 +73,10 @@ struct cancellation_registration final : detail::noncopyable {
   }
 
 private:
-  template<std::int64_t>
   friend struct detail::cancellation_registry;
   friend class detail::cancellation_state;
 
-  std::int64_t bin_idx;
+  std::size_t bin_idx;
   std::function<void(void)> callback_;
   detail::token_cancellation_state_ptr state_;
 };

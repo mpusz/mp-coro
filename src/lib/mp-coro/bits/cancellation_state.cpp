@@ -14,7 +14,7 @@ bool cancellation_state::request_cancellation() noexcept
 }
 
 void cancellation_state::call_registrations()
-{  // Traverse with function application over std::optional.
+{  // Traverse and call callbacks
   while (!registry_.empty())
     if (auto cr = registry_.try_deregister_one(); cr)  // C++23 `and_then` would be nice.
       cr.value()->callback_();  // nullptr dereference cannot happen in here (it would be a programming error).

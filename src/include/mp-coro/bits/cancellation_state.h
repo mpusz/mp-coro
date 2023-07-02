@@ -65,7 +65,7 @@ private:
 
   // Initialized with source reference count set to 1.
   std::atomic<std::uint64_t> state_ = cancellation_source_rc_pos;
-  cancellation_registry<> registry_;
+  cancellation_registry registry_;
 
   // State and its default initialized value is a bit packed version of the following struct:
   // struct {
