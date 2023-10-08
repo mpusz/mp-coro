@@ -35,8 +35,7 @@ class async {
 public:
   using return_type = std::invoke_result_t<Func>;
 
-  template<typename F>
-    requires std::convertible_to<std::remove_cvref_t<F>, Func>
+  template<std::convertible_to<Func> F>
   explicit async(F&& func) : func_{std::forward<F>(func)}
   {
   }
