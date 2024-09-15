@@ -70,20 +70,20 @@ public:
   task(task&&) = default;
   task& operator=(task&&) = delete;
 
-  awaiter_of<T> auto operator co_await() const & noexcept
+  awaiter_of<T> auto operator co_await() const& noexcept
   {
     TRACE_FUNC();
     return awaiter(*promise_);
   }
 
-  awaiter_of<const T&> auto operator co_await() const & noexcept
+  auto operator co_await() const& noexcept
     requires std::move_constructible<T>
   {
     TRACE_FUNC();
     return awaiter(*promise_);
   }
 
-  awaiter_of<T&&> auto operator co_await() const && noexcept
+  auto operator co_await() const&& noexcept
     requires std::move_constructible<T>
   {
     TRACE_FUNC();
