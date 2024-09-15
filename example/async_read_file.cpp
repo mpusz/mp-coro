@@ -42,7 +42,7 @@ std::jthread worker;
 mp_coro::task<std::string::size_type> async_read_file(const std::filesystem::path& path)
 {
   struct awaitable {
-    awaitable(std::filesystem::path path): path_(std::move(path)) {}
+    awaitable(const std::filesystem::path& path) : path_(path) {}
     static bool await_ready() noexcept { return false; }
     void await_suspend(std::coroutine_handle<> handle)
     {
