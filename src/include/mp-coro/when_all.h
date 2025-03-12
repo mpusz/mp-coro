@@ -172,6 +172,7 @@ awaitable auto when_all(Awaitables&&... awaitables)
 }
 
 template<std::ranges::range R>
+  requires awaitable<std::ranges::range_value_t<R>>
 awaitable auto when_all(R&& awaitables)
 {
   TRACE_FUNC();
