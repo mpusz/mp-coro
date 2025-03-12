@@ -26,7 +26,7 @@
 
 #define TRACE_FUNC()
 
-#else // !defined(MP_CORO_TRACE_LEVEL) || MP_CORO_TRACE_LEVEL == 0
+#else  // !defined(MP_CORO_TRACE_LEVEL) || MP_CORO_TRACE_LEVEL == 0
 
 #include <iostream>
 #include <source_location>
@@ -45,7 +45,7 @@ struct location {
   }
 };
 
-}
+}  // namespace detail
 
 #if MP_CORO_TRACE_LEVEL == 1
 
@@ -62,13 +62,10 @@ namespace detail {
 
 struct [[nodiscard]] trace_on_finish {
   location loc;
-  ~trace_on_finish()
-  {
-    std::osyncstream(std::cout) << "[TRACE]: " << loc << ": FINISH\n";
-  }
+  ~trace_on_finish() { std::osyncstream(std::cout) << "[TRACE]: " << loc << ": FINISH\n"; }
 };
 
-} // namespace detail
+}  // namespace detail
 
 detail::trace_on_finish trace_func(std::source_location loc = std::source_location::current())
 {
@@ -80,6 +77,6 @@ detail::trace_on_finish trace_func(std::source_location loc = std::source_locati
 
 #endif /* MP_CORO_TRACE_LEVEL == 2 */
 
-} // namespace mp_coro
+}  // namespace mp_coro
 
-#endif // !defined(MP_CORO_TRACE_LEVEL) || MP_CORO_TRACE_LEVEL == 0
+#endif  // !defined(MP_CORO_TRACE_LEVEL) || MP_CORO_TRACE_LEVEL == 0

@@ -22,8 +22,8 @@
 
 #include <mp-coro/async.h>
 #include <mp-coro/sync_await.h>
-#include <mp-coro/when_all.h>
 #include <mp-coro/task.h>
+#include <mp-coro/when_all.h>
 #include <iostream>
 #include <syncstream>
 #include <thread>
@@ -49,10 +49,22 @@ struct lifetime {
 
   lifetime() = default;
   lifetime(const lifetime&) { txt = "active (copy-constructed)"; }
-  lifetime& operator=(const lifetime&) { txt = "active (copy-assigned)"; return *this; }
+  lifetime& operator=(const lifetime&)
+  {
+    txt = "active (copy-assigned)";
+    return *this;
+  }
 
-  lifetime(lifetime&& other) noexcept { txt = "active (move-constructed)", other.txt = "unspecified (move-constructed-from)"; }
-  lifetime& operator=(lifetime&& other) noexcept { txt = "active (move-assigned)"; other.txt = "unspecified (move-assigned-from)"; return *this; }
+  lifetime(lifetime&& other) noexcept
+  {
+    txt = "active (move-constructed)", other.txt = "unspecified (move-constructed-from)";
+  }
+  lifetime& operator=(lifetime&& other) noexcept
+  {
+    txt = "active (move-assigned)";
+    other.txt = "unspecified (move-assigned-from)";
+    return *this;
+  }
 
   ~lifetime() { txt = "destructed"; }
 
@@ -66,50 +78,49 @@ int main()
 
   try {
     {
-      auto func = [obj = lifetime{}]{ obj(); };
+      auto func = [obj = lifetime{}] { obj(); };
       auto work = when_all(async(func), async(func), async(func));
       sync_await(work);
     }
 
     {
-      auto func = [obj = lifetime{}]{ obj(); };
+      auto func = [obj = lifetime{}] { obj(); };
       sync_await(when_all(async(func), async(func), async(func)));
     }
 
     {
-      auto a1 = async([obj = lifetime{}]{ obj(); });
-      auto a2 = async([obj = lifetime{}]{ obj(); });
-      auto a3 = async([obj = lifetime{}]{ obj(); });
+      auto a1 = async([obj = lifetime{}] { obj(); });
+      auto a2 = async([obj = lifetime{}] { obj(); });
+      auto a3 = async([obj = lifetime{}] { obj(); });
       sync_await(when_all(std::move(a1), std::move(a2), std::move(a3)));
     }
 
     {
-      auto work = when_all(async([]{ return 1; }), async([]{ return 2; }), async([]{ return 3; }), async([]{ return 4; }));
+      auto work =
+        when_all(async([] { return 1; }), async([] { return 2; }), async([] { return 3; }), async([] { return 4; }));
       auto [v1, v2, v3, v4] = sync_await(work);
       std::cout << "v1: " << v1 << ", v2: " << v2 << ", v3: " << v3 << ", v4: " << v4 << '\n';
     }
 
     {
-      auto [v1, v2, v3, v4] = sync_await(when_all(async([]{ return 5; }), async([]{ return 6; }), async([]{ return 7; }), async([]{ return 8; })));
+      auto [v1, v2, v3, v4] = sync_await(
+        when_all(async([] { return 5; }), async([] { return 6; }), async([] { return 7; }), async([] { return 8; })));
       std::cout << "v1: " << v1 << ", v2: " << v2 << ", v3: " << v3 << ", v4: " << v4 << '\n';
     }
 
     {
       std::vector<task<void>> v;
-      for(int i=0; i<3; ++i)
-        v.push_back(make_task(async([]{ sleep_for(1s); })));
+      for (int i = 0; i < 3; ++i) v.push_back(make_task(async([] { sleep_for(1s); })));
       sync_await(when_all(std::move(v)));
     }
 
     {
       std::vector<task<void>> v;
-      for(int i=0; i<3; ++i)
-        v.push_back(make_task(async([]{ sleep_for(1s); })));
+      for (int i = 0; i < 3; ++i) v.push_back(make_task(async([] { sleep_for(1s); })));
       auto a = when_all(v);
       sync_await(a);
     }
-  }
-  catch(const std::exception& ex) {
+  } catch (const std::exception& ex) {
     std::cout << "Unhandled exception: " << ex.what() << '\n';
   }
 }

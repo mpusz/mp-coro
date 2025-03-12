@@ -31,7 +31,7 @@ namespace mp_coro::detail {
 template<typename... Args>
 void check_and_rethrow(const std::variant<Args...>& result)
 {
-  if(std::holds_alternative<std::exception_ptr>(result))
+  if (std::holds_alternative<std::exception_ptr>(result))
     std::rethrow_exception(std::get<std::exception_ptr>(std::move(result)));
 }
 
@@ -41,13 +41,12 @@ protected:
   std::variant<std::monostate, std::exception_ptr, T> result;
 public:
   template<std::convertible_to<T> U>
-  void set_value(U&& value)
-    noexcept(std::is_nothrow_constructible_v<T, decltype(std::forward<U>(value))>)
+  void set_value(U&& value) noexcept(std::is_nothrow_constructible_v<T, decltype(std::forward<U>(value))>)
   {
     result.template emplace<T>(std::forward<U>(value));
   }
 
-  [[nodiscard]] const T& get() const &
+  [[nodiscard]] const T& get() const&
   {
     check_and_rethrow(this->result);
     return std::get<T>(this->result);
@@ -65,10 +64,7 @@ class storage_base<T&> {
 protected:
   std::variant<std::monostate, std::exception_ptr, T*> result;
 public:
-  void set_value(T& value) noexcept
-  {
-    result = std::addressof(value);
-  }
+  void set_value(T& value) noexcept { result = std::addressof(value); }
 
   [[nodiscard]] T& get() const
   {
@@ -82,20 +78,14 @@ class storage_base<void> {
 protected:
   std::variant<std::monostate, std::exception_ptr> result;
 public:
-  void get() const
-  {
-    check_and_rethrow(this->result);
-  }
+  void get() const { check_and_rethrow(this->result); }
 };
 
 template<typename T>
 class storage : public storage_base<T> {
 public:
   using value_type = T;
-  void set_exception(std::exception_ptr ptr) noexcept
-  {
-    this->result = std::move(ptr);
-  }
+  void set_exception(std::exception_ptr ptr) noexcept { this->result = std::move(ptr); }
 };
 
-} // namespace mp_coro::detail
+}  // namespace mp_coro::detail

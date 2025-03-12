@@ -36,8 +36,7 @@ mp_coro::generator<int> simple()
 
 mp_coro::generator<std::uint64_t> iota(std::uint64_t start = 0)
 {
-  while(true)
-    co_yield start++;
+  while (true) co_yield start++;
 }
 
 mp_coro::generator<std::uint64_t> fibonacci()
@@ -52,24 +51,23 @@ mp_coro::generator<std::uint64_t> fibonacci()
 template<std::integral T>
 mp_coro::generator<T> range(T first, T last)
 {
-  while(first < last)
-    co_yield first++;
+  while (first < last) co_yield first++;
 }
 
 mp_coro::generator<int&> ref()
 {
-  static std::vector data = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
-  for(int& i : data)
-    co_yield i;
+  static std::vector data = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+  for (int& i : data) co_yield i;
 }
 
 template<std::ranges::input_range... Rs, std::size_t... Indices>
-mp_coro::generator<std::tuple<std::ranges::range_reference_t<Rs>...>> zip_impl(std::index_sequence<Indices...>, Rs... ranges)
+mp_coro::generator<std::tuple<std::ranges::range_reference_t<Rs>...>> zip_impl(std::index_sequence<Indices...>,
+                                                                               Rs... ranges)
 {
   std::tuple<std::ranges::iterator_t<Rs>...> its{std::ranges::begin(ranges)...};
   std::tuple<std::ranges::sentinel_t<Rs>...> ends{std::ranges::end(ranges)...};
-  auto done = [&]{ return ((std::get<Indices>(its) == std::get<Indices>(ends)) || ...); };
-  while(!done()) {
+  auto done = [&] { return ((std::get<Indices>(its) == std::get<Indices>(ends)) || ...); };
+  while (!done()) {
     co_yield {*std::get<Indices>(its)...};
     (++std::get<Indices>(its), ...);
   }
@@ -91,19 +89,16 @@ mp_coro::generator<int> broken()
 int main()
 {
   try {
-    for(auto v : simple())
-      std::cout << v << ' ';
+    for (auto v : simple()) std::cout << v << ' ';
     std::cout << '\n';
 
     auto gen = iota();
-    for(auto i : std::views::counted(gen.begin(), 10))
-      std::cout << i << ' ';
+    for (auto i : std::views::counted(gen.begin(), 10)) std::cout << i << ' ';
     std::cout << '\n';
 
     // TODO Uncomment the lines below when gcc is fixed
     // for(auto i : iota() | std::views::take(10))
-    for(auto i : iota() | std::views::take_while([](auto i){ return i < 10; }))
-      std::cout << i << ' ';
+    for (auto i : iota() | std::views::take_while([](auto i) { return i < 10; })) std::cout << i << ' ';
     std::cout << '\n';
 
     // auto g = iota();
@@ -115,34 +110,29 @@ int main()
     //   std::cout << i << ' ';
     // std::cout << '\n';
 
-    for(const auto& i : fibonacci() | std::views::take_while([](auto i){ return i < 1000; }))
-      std::cout << i << ' ';
+    for (const auto& i : fibonacci() | std::views::take_while([](auto i) { return i < 1000; })) std::cout << i << ' ';
     std::cout << '\n';
 
-    for(auto i : range(65, 91))
-      std::cout << static_cast<char>(i) << ' ';
+    for (auto i : range(65, 91)) std::cout << static_cast<char>(i) << ' ';
     std::cout << '\n';
 
-    for(auto& v : ref())
-      std::cout << v << ' ';
+    for (auto& v : ref()) std::cout << v << ' ';
     std::cout << '\n';
 
     int r1[] = {1, 2, 3};
     int r2[] = {4, 5, 6, 7};
-    for(auto& [v1, v2] : zip(r1, r2))
-      std::cout << "[" << v1 << ", " << v2 << "] ";
+    for (auto& [v1, v2] : zip(r1, r2)) std::cout << "[" << v1 << ", " << v2 << "] ";
     std::cout << '\n';
 
     // for(auto& [v1, v2] : zip(iota(), fibonacci()) | std::views::take(10))
-    for(auto& [v1, v2] : zip(iota(), fibonacci()) | std::views::take_while([](const auto& t){ return std::get<0>(t) < 10; }))
+    for (auto& [v1, v2] :
+         zip(iota(), fibonacci()) | std::views::take_while([](const auto& t) { return std::get<0>(t) < 10; }))
       std::cout << "[" << v1 << ", " << v2 << "] ";
     std::cout << '\n';
 
-    for(auto v : broken())
-      std::cout << v << ' ';
+    for (auto v : broken()) std::cout << v << ' ';
     std::cout << '\n';
-  }
-  catch(const std::exception& ex) {
+  } catch (const std::exception& ex) {
     std::cout << "Unhandled exception: " << ex.what() << '\n';
   }
 }

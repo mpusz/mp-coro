@@ -42,10 +42,7 @@ mp_coro::task<int> bar()
 
 int val = 123;
 
-mp_coro::task<int&> ref()
-{
-  co_return val;
-}
+mp_coro::task<int&> ref() { co_return val; }
 
 mp_coro::task<> baz()
 {
@@ -76,8 +73,7 @@ int main()
     sync_await(empty());
     std::cout << sync_await(ref()) << '\n';
     sync_await(multiple_await());
-  }
-  catch(const std::exception& ex) {
+  } catch (const std::exception& ex) {
     std::cout << "Unhandled exception: " << ex.what() << '\n';
   }
 }

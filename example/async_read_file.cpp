@@ -20,8 +20,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#include <mp-coro/task.h>
 #include <mp-coro/sync_await.h>
+#include <mp-coro/task.h>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
@@ -88,8 +88,7 @@ int main()
     auto path = "/etc/passwd";
     f1(path);
     sync_await(f2(path));
-  }
-  catch(const std::exception& ex) {
+  } catch (const std::exception& ex) {
     std::osyncstream(std::cout) << "Unhandled exception: " << ex.what() << '\n';
   }
 }

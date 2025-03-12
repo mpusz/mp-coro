@@ -51,8 +51,7 @@ int main()
 {
   try {
     mp_coro::sync_await(sleepy());
-  }
-  catch(const std::exception& ex) {
+  } catch (const std::exception& ex) {
     std::cout << "Unhandled exception: " << ex.what() << '\n';
   }
 }

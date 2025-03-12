@@ -45,4 +45,4 @@ template<awaitable A>
   return sync_task.get();
 }
 
-} // namespace mp_coro
+}  // namespace mp_coro

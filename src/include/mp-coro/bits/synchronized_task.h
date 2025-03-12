@@ -36,12 +36,12 @@ template<typename Sync, task_value_type T>
 class [[nodiscard]] synchronized_task {
 public:
   using value_type = T;
-  
+
   struct promise_type : private detail::noncopyable, task_promise_storage<T> {
     Sync* sync = nullptr;
 
     static std::suspend_always initial_suspend() noexcept
-    { 
+    {
       TRACE_FUNC();
       return {};
     }
@@ -76,13 +76,13 @@ public:
     std::coroutine_handle<promise_type>::from_promise(*promise_).resume();
   }
 
-  [[nodiscard]] decltype(auto) get() const &
+  [[nodiscard]] decltype(auto) get() const&
   {
     TRACE_FUNC();
     return promise_->get();
   }
 
-  [[nodiscard]] decltype(auto) get() const &&
+  [[nodiscard]] decltype(auto) get() const&&
   {
     TRACE_FUNC();
     return std::move(*promise_).get();
@@ -91,18 +91,15 @@ public:
 private:
   promise_ptr<promise_type> promise_;
 
-  synchronized_task(promise_type* promise): promise_(promise)
-  {
-    TRACE_FUNC();
-  }
+  synchronized_task(promise_type* promise) : promise_(promise) { TRACE_FUNC(); }
 };
 
 template<typename Sync, awaitable A>
   requires requires(Sync s) { s.notify_awaitable_completed(); }
 synchronized_task<Sync, remove_rvalue_reference_t<await_result_t<A>>> make_synchronized_task(A&& awaitable)
-{ 
+{
   TRACE_FUNC();
   co_return co_await std::forward<A>(awaitable);
 }
 
-} // namespace mp_coro::detail
+}  // namespace mp_coro::detail

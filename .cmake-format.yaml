@@ -1,0 +1,13 @@
+include: ["cmake/.cmake-format-additional_commands-jegp.cmake_modules.yaml"]
+format:
+  line_width: 120
+  tab_size: 4
+  max_subgroups_hwrap: 3
+  max_pargs_hwrap: 6
+  max_rows_cmdline: 2
+  dangle_parens: true
+  min_prefix_chars: 8
+  max_prefix_chars: 8
+  max_lines_hwrap: 2
+markup:
+  enable_markup: false

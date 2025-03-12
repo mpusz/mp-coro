@@ -23,8 +23,8 @@
 #pragma once
 
 #include <mp-coro/trace.h>
-#include <memory>
 #include <coroutine>
+#include <memory>
 
 namespace mp_coro {
 
@@ -34,12 +34,11 @@ struct coro_deleter {
   {
     TRACE_FUNC();
     auto handle = std::coroutine_handle<Promise>::from_promise(*promise);
-    if(handle)
-      handle.destroy();
+    if (handle) handle.destroy();
   }
 };
 
 template<typename T>
 using promise_ptr = std::unique_ptr<T, coro_deleter>;
 
-} // namespace mp_coro
+}  // namespace mp_coro

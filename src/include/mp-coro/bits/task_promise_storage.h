@@ -40,8 +40,7 @@ struct task_promise_storage_base : storage<T> {
 template<typename T>
 struct task_promise_storage : task_promise_storage_base<T> {
   template<typename U>
-  void return_value(U&& value)
-    noexcept(noexcept(this->set_value(std::forward<U>(value))))
+  void return_value(U&& value) noexcept(noexcept(this->set_value(std::forward<U>(value))))
     requires requires { this->set_value(std::forward<U>(value)); }
   {
     TRACE_FUNC();
@@ -51,10 +50,7 @@ struct task_promise_storage : task_promise_storage_base<T> {
 
 template<>
 struct task_promise_storage<void> : task_promise_storage_base<void> {
-  void return_void() noexcept
-  {
-    TRACE_FUNC();
-  }
+  void return_void() noexcept { TRACE_FUNC(); }
 };
 
-} // namespace mp_coro::detail
+}  // namespace mp_coro::detail

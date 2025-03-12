@@ -34,4 +34,4 @@ using awaiter_for_t = decltype(detail::get_awaiter(std::declval<A>()));
 template<awaitable A>
 using await_result_t = decltype(std::declval<awaiter_for_t<A>>().await_resume());
 
-} // namespace mp_coro
+}  // namespace mp_coro

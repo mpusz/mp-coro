@@ -24,8 +24,8 @@
 
 #include <mp-coro/bits/noncopyable.h>
 #include <mp-coro/bits/task_promise_storage.h>
-#include <mp-coro/coro_ptr.h>
 #include <mp-coro/concepts.h>
+#include <mp-coro/coro_ptr.h>
 #include <mp-coro/trace.h>
 #include <mp-coro/type_traits.h>
 #include <concepts>
@@ -37,12 +37,12 @@ template<task_value_type T = void, typename Allocator = void>
 class [[nodiscard]] task {
 public:
   using value_type = T;
-  
+
   struct promise_type : private detail::noncopyable, detail::task_promise_storage<T> {
     std::coroutine_handle<> continuation = std::noop_coroutine();
 
     static std::suspend_always initial_suspend() noexcept
-    { 
+    {
       TRACE_FUNC();
       return {};
     }
@@ -121,13 +121,10 @@ private:
       return promise.get();
     }
   };
-  
+
   promise_ptr<promise_type> promise_;
 
-  task(promise_type* promise): promise_(promise)
-  {
-    TRACE_FUNC();
-  }
+  task(promise_type* promise) : promise_(promise) { TRACE_FUNC(); }
 };
 
 template<awaitable A>
@@ -137,4 +134,4 @@ task<remove_rvalue_reference_t<await_result_t<A>>> make_task(A&& awaitable)
   co_return co_await std::forward<A>(awaitable);
 }
 
-} // namespace mp_coro
+}  // namespace mp_coro

@@ -20,17 +20,21 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#include <mp-coro/task.h>
 #include <mp-coro/sync_await.h>
-#include <iostream>
+#include <mp-coro/task.h>
 #include <chrono>
+#include <iostream>
 #include <thread>
 
 mp_coro::task<int> async_foo()
 {
   struct awaitable {
     int result;
-    static bool await_ready() noexcept { TRACE_FUNC(); return false; }
+    static bool await_ready() noexcept
+    {
+      TRACE_FUNC();
+      return false;
+    }
     void await_suspend(std::coroutine_handle<> handle)
     {
       auto work = [&, handle] {
@@ -42,7 +46,11 @@ mp_coro::task<int> async_foo()
       TRACE_FUNC();
       std::jthread(work).detach();  // TODO: Fix that (replace with a thread pool)
     }
-    int await_resume() noexcept { TRACE_FUNC(); return result; }
+    int await_resume() noexcept
+    {
+      TRACE_FUNC();
+      return result;
+    }
   };
   co_return co_await awaitable{};
 }
@@ -58,8 +66,7 @@ int main()
 {
   try {
     std::cout << sync_await(bar()) << "\n";
-  }
-  catch(const std::exception& ex) {
+  } catch (const std::exception& ex) {
     std::cout << "Unhandled exception caught: " << ex.what() << "\n";
   }
 }
