@@ -25,7 +25,7 @@
 #include <mp-coro/bits/synchronized_task.h>
 #include <mp-coro/concepts.h>
 #include <mp-coro/trace.h>
-#include <semaphore>
+#include <latch>
 
 namespace mp_coro {
 
@@ -33,15 +33,15 @@ template<awaitable A>
 [[nodiscard]] decltype(auto) sync_await(A&& awaitable)
 {
   struct sync {
-    std::binary_semaphore sem{0};
-    void notify_awaitable_completed() { sem.release(); }
+    std::latch latch{1};
+    void notify_awaitable_completed() { latch.count_down(); }
   };
 
   TRACE_FUNC();
   auto sync_task = detail::make_synchronized_task<sync>(std::forward<A>(awaitable));
   sync work_done;
   sync_task.start(work_done);
-  work_done.sem.acquire();
+  work_done.latch.wait();
   return sync_task.get();
 }
 
