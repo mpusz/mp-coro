@@ -37,7 +37,7 @@ namespace mp_coro {
 
 namespace detail {
 
-class when_all_sync {
+class when_all_sync : noncopyable {
   std::atomic<std::size_t> counter_;
   std::coroutine_handle<> continuation_;
 public:
