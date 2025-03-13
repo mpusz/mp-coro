@@ -52,7 +52,7 @@ public:
     return std::get<T>(this->result);
   }
 
-  [[nodiscard]] T&& get() &&
+  [[nodiscard]] T get() &&
   {
     check_and_rethrow(this->result);
     return std::get<T>(std::move(this->result));

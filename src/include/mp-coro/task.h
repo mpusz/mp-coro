@@ -89,7 +89,7 @@ public:
     TRACE_FUNC();
 
     struct rvalue_awaiter : awaiter {
-      T&& await_resume()
+      T await_resume()
       {
         TRACE_FUNC();
         return std::move(this->promise).get();
