@@ -41,14 +41,14 @@ class when_all_sync : noncopyable {
   std::atomic<std::size_t> counter_;
   std::coroutine_handle<> continuation_;
 public:
-  constexpr when_all_sync(std::size_t count) noexcept : counter_(count + 1)  // +1 for attaching a continuation
+  explicit constexpr when_all_sync(std::size_t count) noexcept : counter_(count + 1)  // +1 for attaching a continuation
   {
   }
   when_all_sync(when_all_sync&& other) noexcept : counter_(other.counter_.load()), continuation_(other.continuation_) {}
 
   // Returns false when a continuation is being attached when all work is already done
   // and the current coroutine should be resumed right away via Symmetric Control Transfer.
-  bool set_continuation(std::coroutine_handle<> cont)
+  [[nodiscard]] bool set_continuation(std::coroutine_handle<> cont)
   {
     continuation_ = cont;
     return counter_.fetch_sub(1, std::memory_order_acq_rel) > 1;
@@ -63,12 +63,11 @@ public:
 
   // True if the continuation is already assigned which means that someone already awaited for
   // the awaitable completion.
-  bool is_ready() const { return static_cast<bool>(continuation_); }
+  [[nodiscard]] bool is_ready() const { return static_cast<bool>(continuation_); }
 };
 
-
 template<typename T>
-std::size_t tasks_size(T& container)
+constexpr std::size_t tasks_size(const T& container)
 {
   if constexpr (std::ranges::range<T>)
     return size(container);
@@ -158,7 +157,7 @@ private:
     }
   };
   T tasks_;
-  when_all_sync sync_ = tasks_size(tasks_);
+  when_all_sync sync_{tasks_size(tasks_)};
 };
 
 }  // namespace detail
