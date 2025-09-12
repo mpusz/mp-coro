@@ -42,7 +42,7 @@ if(${projectPrefix}AS_SYSTEM_HEADERS)
     set(coroAsSystem SYSTEM)
 endif()
 
-add_library(mp-coro INTERFACE
+add_library(mp-coro
     include/mp-coro/async.h
     include/mp-coro/concepts.h
     include/mp-coro/coro_ptr.h
@@ -51,9 +51,14 @@ add_library(mp-coro INTERFACE
     include/mp-coro/task.h
     include/mp-coro/trace.h
     include/mp-coro/type_traits.h
+    include/mp-coro/cancellation.h
+
+    lib/mp-coro/bits/cancellation_registry.cpp
+    lib/mp-coro/bits/cancellation_state.cpp
 )
-target_compile_features(mp-coro INTERFACE cxx_std_20)
-target_include_directories(mp-coro ${coroAsSystem} INTERFACE
+target_compile_features(mp-coro PUBLIC cxx_std_20)
+target_include_directories(mp-coro ${coroAsSystem}
+  PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>
 )
