@@ -40,7 +40,9 @@ struct location {
   std::source_location data;
   friend std::ostream& operator<<(std::ostream& os, const location& loc)
   {
-    os << loc.data.file_name() << " (" << loc.data.line() << ") `" << loc.data.function_name() << "`";
+    os << "[TRACE]: Function: " << loc.data.function_name() << "\n";
+    os << "[TRACE]: File: " << loc.data.file_name() << " (" << loc.data.line() << ")\n";
+    os << "\n";
     return os;
   }
 };
@@ -51,7 +53,7 @@ struct location {
 
 void trace_func(std::source_location loc = std::source_location::current())
 {
-  std::osyncstream(std::cout) << "[TRACE]: " << detail::location{loc} << '\n';
+  std::osyncstream(std::cout) << detail::location{loc};
 }
 
 #define TRACE_FUNC() ::mp_coro::trace_func()
@@ -62,14 +64,19 @@ namespace detail {
 
 struct [[nodiscard]] trace_on_finish {
   location loc;
-  ~trace_on_finish() { std::osyncstream(std::cout) << "[TRACE]: " << loc << ": FINISH\n"; }
+  ~trace_on_finish()
+  {
+    std::osyncstream(std::cout) << "[TRACE]: FINISH\n";
+    std::osyncstream(std::cout) << loc;
+  }
 };
 
 }  // namespace detail
 
 detail::trace_on_finish trace_func(std::source_location loc = std::source_location::current())
 {
-  std::osyncstream(std::cout) << "[TRACE]: " << detail::location{loc} << ": START\n";
+  std::osyncstream(std::cout) << "[TRACE]: START\n";
+  std::osyncstream(std::cout) << detail::location{loc};
   return detail::trace_on_finish{loc};
 }
 
