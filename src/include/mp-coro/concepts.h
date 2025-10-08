@@ -26,6 +26,7 @@
 #include <mp-coro/bits/type_traits.h>
 #include <concepts>
 #include <coroutine>
+#include <type_traits>
 
 namespace mp_coro {
 
@@ -82,8 +83,5 @@ template<typename T, typename Value>
 concept awaitable_of = awaitable<T> && requires(T&& t) {
   { detail::get_awaiter(std::forward<T>(t)) } -> awaiter_of<Value>;
 };
-
-template<typename T>
-concept task_value_type = std::move_constructible<T> || std::is_reference_v<T> || std::is_void_v<T>;
 
 }  // namespace mp_coro

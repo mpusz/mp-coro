@@ -24,14 +24,14 @@
 
 #include <mp-coro/bits/noncopyable.h>
 #include <mp-coro/bits/task_promise_storage.h>
-#include <mp-coro/coro_ptr.h>
+#include <mp-coro/coro_handle.h>
 #include <mp-coro/trace.h>
 #include <mp-coro/type_traits.h>
 #include <coroutine>
 
 namespace mp_coro::detail {
 
-template<typename Sync, task_value_type T>
+template<typename Sync, typename T>
   requires requires(Sync s) { s.notify_awaitable_completed(); }
 class [[nodiscard]] synchronized_task {
 public:
@@ -62,36 +62,32 @@ public:
     synchronized_task get_return_object() noexcept
     {
       TRACE_FUNC();
-      return this;
+      return synchronized_task{*this};
     }
   };
-
-  synchronized_task(synchronized_task&&) = default;
-  synchronized_task& operator=(synchronized_task&&) = delete;
 
   // custom functions
   void start(Sync& s)
   {
-    promise_->sync = &s;
-    std::coroutine_handle<promise_type>::from_promise(*promise_).resume();
+    handle_->promise().sync = &s;
+    handle_->resume();
   }
 
   [[nodiscard]] decltype(auto) get() const&
   {
     TRACE_FUNC();
-    return promise_->get();
+    return handle_->promise().get();
   }
 
   [[nodiscard]] decltype(auto) get() const&&
   {
     TRACE_FUNC();
-    return std::move(*promise_).get();
+    return std::move(handle_->promise()).get();
   }
 
 private:
-  promise_ptr<promise_type> promise_;
-
-  synchronized_task(promise_type* promise) : promise_(promise) { TRACE_FUNC(); }
+  coro_handle<promise_type> handle_;
+  explicit synchronized_task(promise_type& promise) : handle_(promise) { TRACE_FUNC(); }
 };
 
 template<typename Sync, awaitable A>

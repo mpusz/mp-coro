@@ -22,23 +22,38 @@
 
 #pragma once
 
-#include <mp-coro/trace.h>
 #include <coroutine>
-#include <memory>
+#include <utility>
 
 namespace mp_coro {
 
-struct coro_deleter {
-  template<typename Promise>
-  void operator()(Promise* promise) const noexcept
-  {
-    TRACE_FUNC();
-    auto handle = std::coroutine_handle<Promise>::from_promise(*promise);
-    if (handle) handle.destroy();
-  }
-};
+template<typename Promise>
+class coro_handle {
+public:
+  using handle_type = std::coroutine_handle<Promise>;
 
-template<typename T>
-using promise_ptr = std::unique_ptr<T, coro_deleter>;
+  explicit coro_handle(handle_type h) : h_(h) {}
+  explicit coro_handle(Promise& p) : h_(handle_type::from_promise(p)) {}
+
+  coro_handle(coro_handle&& other) noexcept : h_(std::exchange(other.h_, nullptr)) {}
+  coro_handle& operator=(coro_handle&& other) noexcept
+  {
+    if (h_) h_.destroy();
+    h_ = std::exchange(other.h_, nullptr);
+    return *this;
+  }
+  coro_handle(const coro_handle&) = delete;
+  coro_handle& operator=(const coro_handle&) = delete;
+  ~coro_handle()
+  {
+    if (h_) h_.destroy();
+  }
+
+  explicit operator bool() const noexcept { return static_cast<bool>(h_); }
+  const handle_type* operator->() const noexcept { return &h_; }
+  const handle_type& operator*() const noexcept { return h_; }
+private:
+  handle_type h_;
+};
 
 }  // namespace mp_coro

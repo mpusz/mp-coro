@@ -175,8 +175,7 @@ template<std::ranges::range R>
 awaitable auto when_all(R&& awaitables)
 {
   TRACE_FUNC();
-  std::vector<detail::synchronized_task<detail::when_all_sync, await_result_t<std::ranges::range_reference_t<R>>>>
-    tasks;
+  std::vector<detail::synchronized_task<detail::when_all_sync, await_result_t<std::ranges::range_value_t<R>>>> tasks;
   tasks.reserve(size(awaitables));
   for (auto&& awaitable : std::forward<R>(awaitables))
     tasks.emplace_back(

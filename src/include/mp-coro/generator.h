@@ -23,7 +23,7 @@
 #pragma once
 
 #include <mp-coro/bits/noncopyable.h>
-#include <mp-coro/coro_ptr.h>
+#include <mp-coro/coro_handle.h>
 #include <mp-coro/trace.h>
 #include <cassert>
 #include <concepts>
@@ -59,7 +59,7 @@ public:
     generator get_return_object() noexcept
     {
       TRACE_FUNC();
-      return this;
+      return generator{*this};
     }
     std::suspend_always yield_value(reference v) noexcept
     {
@@ -85,7 +85,8 @@ public:
     using value_type = generator::value_type;
     using difference_type = std::ptrdiff_t;
 
-    iterator() = default;  // TODO Remove when gcc is fixed
+    iterator(const iterator&) = delete;
+    iterator& operator=(const iterator&) = delete;
 
     iterator(iterator&& other) noexcept : handle_(std::exchange(other.handle_, {})) {}
     iterator& operator=(iterator&& other) noexcept
@@ -93,6 +94,8 @@ public:
       handle_ = std::exchange(other.handle_, {});
       return *this;
     }
+
+    ~iterator() = default;
 
     iterator& operator++()
     {
@@ -122,23 +125,16 @@ public:
     [[nodiscard]] bool operator==(std::default_sentinel_t) const noexcept
     {
       TRACE_FUNC();
-      return !handle_ ||  // TODO Remove when gcc is fixed (default-construction will not be available and user should
-                          // not compare with a moved-from iterator)
-             handle_.done();
+      return handle_.done();
     }
   };
   static_assert(std::input_iterator<iterator>);
 
-  generator() = default;  // TODO Remove when gcc is fixed
-
   [[nodiscard]] iterator begin()
   {
     TRACE_FUNC();
-    // Pre: Coroutine is suspended at its initial suspend point
-    assert(promise_ && "Can't call begin on moved-from generator");
-    auto handle = std::coroutine_handle<promise_type>::from_promise(*promise_);
-    handle.resume();
-    return iterator(handle);
+    handle_->resume();
+    return iterator(*handle_);
   }
   [[nodiscard]] std::default_sentinel_t end() const noexcept
   {
@@ -146,8 +142,8 @@ public:
     return std::default_sentinel;
   }
 private:
-  promise_ptr<promise_type> promise_;
-  generator(promise_type* promise) : promise_(promise) {}
+  coro_handle<promise_type> handle_;
+  explicit generator(promise_type& p) : handle_(p) {}
 };
 
 }  // namespace mp_coro

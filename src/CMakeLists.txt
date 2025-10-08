@@ -45,14 +45,15 @@ endif()
 add_library(mp-coro INTERFACE
     include/mp-coro/async.h
     include/mp-coro/concepts.h
-    include/mp-coro/coro_ptr.h
+    include/mp-coro/coro_handle.h
     include/mp-coro/generator.h
+    include/mp-coro/spawn.h
     include/mp-coro/sync_await.h
     include/mp-coro/task.h
     include/mp-coro/trace.h
     include/mp-coro/type_traits.h
 )
-target_compile_features(mp-coro INTERFACE cxx_std_20)
+target_compile_features(mp-coro INTERFACE cxx_std_23)
 target_include_directories(mp-coro ${coroAsSystem} INTERFACE
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>

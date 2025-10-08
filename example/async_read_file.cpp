@@ -25,12 +25,12 @@
 #include <filesystem>
 #include <fstream>
 #include <iostream>
-#include <source_location>
+#include <string>
 #include <syncstream>
 #include <thread>
 
 struct tid_t {
-  friend std::ostream& operator<<(std::ostream& os, tid_t)
+  friend std::ostream& operator<<(std::ostream& os, [[maybe_unused]] tid_t)
   {
     return os << "(tid=" << std::this_thread::get_id() << ')';
   }

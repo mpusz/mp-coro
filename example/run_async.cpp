@@ -56,7 +56,8 @@ mp_coro::task<int> boo()
 mp_coro::task<> example()
 {
   co_await bar();
-  co_await boo();
+  const auto res = co_await boo();
+  std::cout << "Result of boo: " << res << std::endl;
 }
 
 template<typename T>

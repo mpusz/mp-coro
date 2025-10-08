@@ -25,12 +25,13 @@
 #include <mp-coro/bits/storage.h>
 #include <mp-coro/trace.h>
 #include <concepts>
+#include <exception>
 
 namespace mp_coro::detail {
 
 template<typename T>
 struct task_promise_storage_base : storage<T> {
-  void unhandled_exception() noexcept(noexcept(this->set_exception(std::current_exception())))
+  void unhandled_exception() noexcept
   {
     TRACE_FUNC();
     this->set_exception(std::current_exception());
@@ -39,9 +40,8 @@ struct task_promise_storage_base : storage<T> {
 
 template<typename T>
 struct task_promise_storage : task_promise_storage_base<T> {
-  template<typename U>
+  template<std::convertible_to<T> U>
   void return_value(U&& value) noexcept(noexcept(this->set_value(std::forward<U>(value))))
-    requires requires { this->set_value(std::forward<U>(value)); }
   {
     TRACE_FUNC();
     this->set_value(std::forward<U>(value));
@@ -50,7 +50,7 @@ struct task_promise_storage : task_promise_storage_base<T> {
 
 template<>
 struct task_promise_storage<void> : task_promise_storage_base<void> {
-  void return_void() noexcept { TRACE_FUNC(); }
+  static void return_void() noexcept { TRACE_FUNC(); }
 };
 
 }  // namespace mp_coro::detail

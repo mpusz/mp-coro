@@ -22,17 +22,19 @@
 
 #pragma once
 
+#include <concepts>
 #include <exception>
 #include <type_traits>
 #include <variant>
 
 namespace mp_coro::detail {
 
-template<typename... Args>
-void check_and_rethrow(const std::variant<Args...>& result)
+template<typename T, typename V>
+decltype(auto) variant_get(V&& result)
 {
   if (std::holds_alternative<std::exception_ptr>(result))
-    std::rethrow_exception(std::get<std::exception_ptr>(std::move(result)));
+    std::rethrow_exception(std::get<std::exception_ptr>(std::forward<V>(result)));
+  if constexpr (!std::is_void_v<T>) return std::get<T>(std::forward<V>(result));
 }
 
 template<typename T>
@@ -45,18 +47,8 @@ public:
   {
     result.template emplace<T>(std::forward<U>(value));
   }
-
-  [[nodiscard]] const T& get() const&
-  {
-    check_and_rethrow(this->result);
-    return std::get<T>(this->result);
-  }
-
-  [[nodiscard]] T get() &&
-  {
-    check_and_rethrow(this->result);
-    return std::get<T>(std::move(this->result));
-  }
+  [[nodiscard]] const T& get() const& { return detail::variant_get<T>(result); }
+  [[nodiscard]] T get() && { return detail::variant_get<T>(std::move(result)); }
 };
 
 template<typename T>
@@ -65,12 +57,7 @@ protected:
   std::variant<std::monostate, std::exception_ptr, T*> result;
 public:
   void set_value(T& value) noexcept { result = std::addressof(value); }
-
-  [[nodiscard]] T& get() const
-  {
-    check_and_rethrow(this->result);
-    return *std::get<T*>(this->result);
-  }
+  [[nodiscard]] T& get() const { return *detail::variant_get<T*>(result); }
 };
 
 template<>
@@ -78,14 +65,13 @@ class storage_base<void> {
 protected:
   std::variant<std::monostate, std::exception_ptr> result;
 public:
-  void get() const { check_and_rethrow(this->result); }
+  void get() const { detail::variant_get<void>(this->result); }
 };
 
 template<typename T>
 class storage : public storage_base<T> {
 public:
-  using value_type = T;
-  void set_exception(std::exception_ptr ptr) noexcept { this->result = std::move(ptr); }
+  void set_exception(std::exception_ptr ptr) noexcept { this->result = ptr; }
 };
 
 }  // namespace mp_coro::detail

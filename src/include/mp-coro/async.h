@@ -45,7 +45,7 @@ public:
   {
     struct awaiter {
       async& awaitable;
-      bool await_ready() const noexcept
+      [[nodiscard]] bool await_ready() const noexcept
       {
         TRACE_FUNC();
         return false;
@@ -68,7 +68,7 @@ public:
         TRACE_FUNC();
         std::jthread(work).detach();  // TODO: Fix that (replace with a thread pool)
       }
-      decltype(auto) await_resume()
+      [[nodiscard]] decltype(auto) await_resume()
       {
         TRACE_FUNC();
         return std::move(awaitable.result_).get();
